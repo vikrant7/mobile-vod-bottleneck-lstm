@@ -11,7 +11,7 @@ from config import mobilenetv1_ssd_config as config
 def SeperableConv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0, onnx_compatible=False):
     """Replace Conv2d with a depthwise Conv2d and Pointwise Conv2d.
     """
-    ReLU = nn.ReLU if onnx_compatible else nn.ReLU6
+    ReLU = nn.ReLU6
     return Sequential(
         Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=kernel_size,
                groups=in_channels, stride=stride, padding=padding),

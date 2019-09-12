@@ -12,7 +12,7 @@ def create_mobilenetv1_ssd(num_classes, is_test=False):
 
     source_layer_indexes = [
         12,
-        14,
+        13,
     ]
     extras = ModuleList([
         Sequential(

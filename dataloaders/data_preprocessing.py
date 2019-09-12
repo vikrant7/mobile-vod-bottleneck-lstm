@@ -1,4 +1,4 @@
-from ..transforms.transforms import *
+from transforms.transforms import *
 
 
 class TrainAugmentation:

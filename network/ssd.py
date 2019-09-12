@@ -4,7 +4,7 @@ import numpy as np
 from typing import List, Tuple
 import torch.nn.functional as F
 
-from ..utils import box_utils
+from utils import box_utils
 from collections import namedtuple
 GraphPath = namedtuple("GraphPath", ['s0', 'name', 's1'])  #
 
@@ -43,6 +43,7 @@ class SSD(nn.Module):
         start_layer_index = 0
         header_index = 0
         for end_layer_index in self.source_layer_indexes:
+            print(end_layer_index)
             if isinstance(end_layer_index, GraphPath):
                 path = end_layer_index
                 end_layer_index = end_layer_index.s0
@@ -109,6 +110,7 @@ class SSD(nn.Module):
         return confidence, location
 
     def init_from_base_net(self, model):
+        print(self.base_net)
         self.base_net.load_state_dict(torch.load(model, map_location=lambda storage, loc: storage), strict=True)
         self.source_layer_add_ons.apply(_xavier_init_)
         self.extras.apply(_xavier_init_)
