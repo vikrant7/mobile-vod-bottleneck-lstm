@@ -116,7 +116,7 @@ def train(loader, net, criterion, optimizer, device, debug_steps=100, epoch=-1):
 		confidence, locations = net(images)
 		regression_loss, classification_loss = criterion(confidence, locations, labels, boxes)  # TODO CHANGE BOXES
 		loss = regression_loss + classification_loss
-		loss.backward(retain_graph())
+		loss.backward(retain_graph=True)
 		optimizer.step()
 
 		running_loss += loss.item()
@@ -169,7 +169,7 @@ if __name__ == '__main__':
 		create_net = create_mobilenetv1_ssd
 		config = mobilenetv1_ssd_config
 	elif args.net == 'mb1-ssd-lite':
-		create_net = create_mobilenetv1_ssd_bottleneck_lstm
+		create_net = create_mobilenetv1_ssd_lite
 		config = mobilenetv1_ssd_config
 	elif args.net == 'mb2-ssd-lite':
 		create_net = lambda num: create_mobilenetv2_ssd_lite(num, width_mult=args.mb2_width_mult)
