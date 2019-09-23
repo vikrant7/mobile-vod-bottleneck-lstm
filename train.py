@@ -283,5 +283,5 @@ if __name__ == '__main__':
 				f"Validation Classification Loss: {val_classification_loss:.4f}"
 			)
 			model_path = os.path.join(args.checkpoint_folder, f"{args.net}-Epoch-{epoch}-Loss-{val_loss}.pth")
-			net.save(model_path)
+			torch.save(net.state_dict(), model_path)
 			logging.info(f"Saved model {model_path}")
