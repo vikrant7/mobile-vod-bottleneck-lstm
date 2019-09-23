@@ -9,11 +9,7 @@ from torch.utils.data import DataLoader, ConcatDataset
 from torch.optim.lr_scheduler import CosineAnnealingLR, MultiStepLR
 
 from utils.misc import str2bool, Timer, freeze_net_layers, store_labels
-from network.ssd import MatchPrior
-from network.mobilenetv1_ssd import create_mobilenetv1_ssd
-from network.mobilenetv1_ssd_lite import create_mobilenetv1_ssd_lite
-from network.mobilenetv1_ssd_lite_bottleneck_lstm import create_mobilenetv1_ssd_bottleneck_lstm
-from network.mobilenet_v2_ssd_lite import create_mobilenetv2_ssd_lite
+from network.mvod_basenet import MobileVOD, SSD_FPN, MobileNetV1, MatchPrior
 from datasets.voc_dataset import VOCDataset
 from network.multibox_loss import MultiboxLoss
 from config import mobilenetv1_ssd_config
@@ -22,8 +18,6 @@ from dataloaders.data_preprocessing import TrainAugmentation, TestTransform
 parser = argparse.ArgumentParser(
 	description='Mobile Video Object Detection (Bottleneck LSTM) Training With Pytorch')
 
-parser.add_argument("--dataset_type", default="voc", type=str,
-					help='Specify dataset type. Currently support voc and Imagenet VID 2015.')
 parser.add_argument("--net", default="mb1-ssd-lite", type=str,
 					help='network model')
 parser.add_argument('--datasets', nargs='+', help='Dataset directory path')
@@ -31,11 +25,8 @@ parser.add_argument('--validation_dataset', help='Dataset directory path')
 parser.add_argument('--balance_data', action='store_true',
 					help="Balance training data by down-sampling more frequent labels.")
 
-parser.add_argument('--freeze_base_net', action='store_true',
-					help="Freeze base net layers.")
 parser.add_argument('--freeze_net', action='store_true',
 					help="Freeze all the layers except the prediction head.")
-
 parser.add_argument('--width_mult', default=1.0, type=float,
 					help='Width Multiplifier')
 
@@ -55,9 +46,7 @@ parser.add_argument('--extra_layers_lr', default=None, type=float,
 
 
 # Params for loading pretrained basenet or checkpoints.
-parser.add_argument('--base_net',
-					help='Pretrained base model')
-parser.add_argument('--pretrained_ssd', help='Pre-trained base model')
+parser.add_argument('--pretrained', help='Pre-trained model')
 parser.add_argument('--resume', default=None, type=str,
 					help='Checkpoint state_dict file to resume training from')
 
@@ -74,9 +63,9 @@ parser.add_argument('--t_max', default=120, type=float,
 					help='T_max value for Cosine Annealing Scheduler.')
 
 # Train params
-parser.add_argument('--batch_size', default=32, type=int,
+parser.add_argument('--batch_size', default=1, type=int,
 					help='Batch size for training')
-parser.add_argument('--num_epochs', default=120, type=int,
+parser.add_argument('--num_epochs', default=200, type=int,
 					help='the number epochs')
 parser.add_argument('--num_workers', default=4, type=int,
 					help='Number of workers used in dataloading')
@@ -160,19 +149,39 @@ def test(loader, net, criterion, device):
 		running_classification_loss += classification_loss.item()
 	return running_loss / num, running_regression_loss / num, running_classification_loss / num
 
+def initialize_model(pred_enc, pred_dec, save_dir):
+	if args.pretrained:
+		print("Loading weights from pretrained netwok")
+		pretrained_net_dict = torch.load(os.path.join(save_dir,'FramePredModels','frame_nums_lstm_'+str(num_frame), 'NetG_epoch-90.pth'))
+
+		model_dict = pred_enc.state_dict()
+		# 1. filter out unnecessary keys
+		pretrained_dict = {k: v for k, v in pretrained_net_dict.items() if k in model_dict}
+		# 2. overwrite entries in the existing state dict
+		model_dict.update(pretrained_dict)
+		pred_enc.load_state_dict(model_dict)
+
+		model_dict = pred_dec.state_dict()
+		# 1. filter out unnecessary keys
+		pretrained_dict = {k: v for k, v in pretrained_net_dict.items() if k in model_dict}
+		# 2. overwrite entries in the existing state dict
+		model_dict.update(pretrained_dict)
+		pred_dec.load_state_dict(model_dict)
+
+
 
 if __name__ == '__main__':
 	timer = Timer()
 
 	logging.info(args)
 	if args.net == 'mb1-ssd':
-		create_net = create_mobilenetv1_ssd
+		#create_net = create_mobilenetv1_ssd
 		config = mobilenetv1_ssd_config
 	elif args.net == 'mb1-ssd-lite':
-		create_net = create_mobilenetv1_ssd_lite
+		#create_net = create_mobilenetv1_ssd_lite
 		config = mobilenetv1_ssd_config
 	elif args.net == 'mb2-ssd-lite':
-		create_net = lambda num: create_mobilenetv2_ssd_lite(num, width_mult=args.mb2_width_mult)
+		#create_net = lambda num: create_mobilenetv2_ssd_lite(num, width_mult=args.mb2_width_mult)
 		config = mobilenetv1_ssd_config
 	else:
 		logging.fatal("The net type is wrong.")
@@ -187,24 +196,12 @@ if __name__ == '__main__':
 	logging.info("Prepare training datasets.")
 	datasets = []
 	for dataset_path in args.datasets:
-		if args.dataset_type == 'voc':
-			dataset = VOCDataset(dataset_path, transform=train_transform,
+		dataset = VOCDataset(dataset_path, transform=train_transform,
 								 target_transform=target_transform)
-			label_file = os.path.join(args.checkpoint_folder, "voc-model-labels.txt")
-			store_labels(label_file, dataset.class_names)
-			num_classes = len(dataset.class_names)
-		elif args.dataset_type == 'open_images':
-			dataset = OpenImagesDataset(dataset_path,
-				 transform=train_transform, target_transform=target_transform,
-				 dataset_type="train", balance_data=args.balance_data)
-			label_file = os.path.join(args.checkpoint_folder, "open-images-model-labels.txt")
-			store_labels(label_file, dataset.class_names)
-			logging.info(dataset)
-			num_classes = len(dataset.class_names)
-
-		else:
-			raise ValueError(f"Dataset tpye {args.dataset_type} is not supported.")
-		datasets.append(dataset)
+		label_file = os.path.join(args.checkpoint_folder, "voc-model-labels.txt")
+		store_labels(label_file, dataset.class_names)
+		num_classes = len(dataset.class_names)
+	datasets.append(dataset)
 	logging.info(f"Stored labels into file {label_file}.")
 	train_dataset = ConcatDataset(datasets)
 	logging.info("Train dataset size: {}".format(len(train_dataset)))
@@ -212,14 +209,9 @@ if __name__ == '__main__':
 							  num_workers=args.num_workers,
 							  shuffle=True)
 	logging.info("Prepare Validation datasets.")
-	if args.dataset_type == "voc":
-		val_dataset = VOCDataset(args.validation_dataset, transform=test_transform,
+	val_dataset = VOCDataset(args.validation_dataset, transform=test_transform,
 								 target_transform=target_transform, is_test=True)
-	elif args.dataset_type == 'open_images':
-		val_dataset = OpenImagesDataset(dataset_path,
-										transform=test_transform, target_transform=target_transform,
-										dataset_type="test")
-		logging.info(val_dataset)
+	logging.info(val_dataset)
 	logging.info("validation dataset size: {}".format(len(val_dataset)))
 
 	val_loader = DataLoader(val_dataset, args.batch_size,
@@ -227,63 +219,38 @@ if __name__ == '__main__':
 							shuffle=False)
 	#num_classes = 30
 	logging.info("Build network.")
-	net = create_net(num_classes)
+	pred_enc = MobileNetV1(num_classes=num_classes, alpha = 1)
+	pred_dec = SSD_FPN(num_classes=num_classes, alpha = 1, is_test=False)
+	if args.resume is None:
+		initialize_model(pred_enc, pred_dec, args.checkpoint_folder)
+		net = MobileVOD(pred_enc, pred_dec)
+	else:
+		net = MobileVOD(pred_enc, pred_dec)
+		print("Updating weights from resume model")
+		net.load_state_dict(
+			torch.load(args.resume,
+					   map_location=lambda storage, loc: storage))
+
 	min_loss = -10000.0
 	last_epoch = -1
 
 	base_net_lr = args.base_net_lr if args.base_net_lr is not None else args.lr
 	extra_layers_lr = args.extra_layers_lr if args.extra_layers_lr is not None else args.lr
-	if args.freeze_base_net:
-		logging.info("Freeze base net.")
-		freeze_net_layers(net.base_net)
-		params = itertools.chain(net.source_layer_add_ons.parameters(), net.extras.parameters(),
-								 net.regression_headers.parameters(), net.classification_headers.parameters())
-		params = [
-			{'params': itertools.chain(
-				net.source_layer_add_ons.parameters(),
-				net.extras.parameters()
-			), 'lr': extra_layers_lr},
-			{'params': itertools.chain(
-				net.regression_headers.parameters(),
-				net.classification_headers.parameters()
-			)}
-		]
-	elif args.freeze_net:
-		freeze_net_layers(net.base_net)
-		freeze_net_layers(net.source_layer_add_ons)
-		freeze_net_layers(net.extras)
-		params = itertools.chain(net.regression_headers.parameters(), net.classification_headers.parameters())
-		logging.info("Freeze all the layers except prediction heads.")
-	else:
-		params = [
-			{'params': net.base_net.parameters(), 'lr': base_net_lr},
-			{'params': itertools.chain(
-				net.source_layer_add_ons.parameters(),
-				net.extras.parameters()
-			), 'lr': extra_layers_lr},
-			{'params': itertools.chain(
-				net.regression_headers.parameters(),
-				net.classification_headers.parameters()
-			)}
-		]
+	if args.freeze_net:
+		logging.info("Freeze net.")
+		for param in pred_enc.parameters():
+			param.requires_grad = False
+		for param in pred_dec.parameters():
+			param.requires_grad = False
 
-	timer.start("Load Model")
-	if args.resume:
-		logging.info(f"Resume from the model {args.resume}")
-		net.load(args.resume)
-	elif args.base_net:
-		logging.info(f"Init from base net {args.base_net}")
-		net.init_from_base_net(args.base_net)
-	elif args.pretrained_ssd:
-		logging.info(f"Init from pretrained ssd {args.pretrained_ssd}")
-		net.init_from_pretrained_ssd(args.pretrained_ssd)
-	logging.info(f'Took {timer.end("Load Model"):.2f} seconds to load the model.')
+	
 
 	net.to(DEVICE)
 
 	criterion = MultiboxLoss(config.priors, iou_threshold=0.5, neg_pos_ratio=3,
 							 center_variance=0.1, size_variance=0.2, device=DEVICE)
-	optimizer = torch.optim.SGD(params, lr=args.lr, momentum=args.momentum,
+	optimizer = torch.optim.SGD([{'params': [param for name, param in net.pred_encoder.named_parameters()], 'lr': args.lr},
+		{'params': [param for name, param in net.pred_decoder.named_parameters()], 'lr': args.lr},], lr=args.lr, momentum=args.momentum,
 								weight_decay=args.weight_decay)
 	logging.info(f"Learning rate: {args.lr}, Base net learning rate: {base_net_lr}, "
 				 + f"Extra Layers learning rate: {extra_layers_lr}.")
