@@ -5,37 +5,38 @@ from typing import List, Tuple
 from utils import box_utils
 from collections import namedtuple
 from collections import OrderedDict
+from torch.autograd import Variable
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
 import numpy as np
-
+import logging
 
 def SeperableConv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0):
 	"""Replace Conv2d with a depthwise Conv2d and Pointwise Conv2d.
 	"""
 	return nn.Sequential(
-		nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=kernel_size,
-			   groups=in_channels, stride=stride, padding=padding),
+		nn.Conv2d(in_channels=int(in_channels), out_channels=int(in_channels), kernel_size=kernel_size,
+			   groups=int(in_channels), stride=stride, padding=padding),
 		nn.ReLU(),
-		nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
+		nn.Conv2d(in_channels=int(in_channels), out_channels=int(out_channels), kernel_size=1),
 	)
 
 def conv_bn(inp, oup, stride):
 			return nn.Sequential(
-				nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
-				nn.BatchNorm2d(oup),
+				nn.Conv2d(int(inp), int(oup), 3, stride, 1, bias=False),
+				nn.BatchNorm2d(int(oup)),
 				nn.ReLU(inplace=True)
 			)
 def conv_dw(inp, oup, stride):
 			return nn.Sequential(
-				nn.Conv2d(inp, inp, 3, stride, 1, groups=inp, bias=False),
-				nn.BatchNorm2d(inp),
+				nn.Conv2d(int(inp), int(inp), 3, stride, 1, groups=int(inp), bias=False),
+				nn.BatchNorm2d(int(inp)),
 				nn.ReLU(inplace=True),
 
-				nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
-				nn.BatchNorm2d(oup),
+				nn.Conv2d(int(inp), int(oup), 1, 1, 0, bias=False),
+				nn.BatchNorm2d(int(oup)),
 				nn.ReLU(inplace=True),
 			)
 class MatchPrior(object):
@@ -63,8 +64,8 @@ class BottleneckLSTMCell(nn.Module):
 
 		assert hidden_channels % 2 == 0
 
-		self.input_channels = input_channels
-		self.hidden_channels = hidden_channels
+		self.input_channels = int(input_channels)
+		self.hidden_channels = int(hidden_channels)
 		self.num_features = 4
 		self.W = nn.Conv2d(in_channels=self.input_channels, out_channels=self.input_channels, kernel_size=3, groups=self.input_channels, stride=1, padding=1)
 		self.Wy  = nn.Conv2d(int(self.input_channels+self.hidden_channels), self.hidden_channels, kernel_size=1)
@@ -118,8 +119,8 @@ class BottleneckLSTMCell(nn.Module):
 class BottleneckLSTM(nn.Module):
 	def __init__(self, input_channels, hidden_channels, height, width, batch_size):
 		super(BottleneckLSTM, self).__init__()
-		self.input_channels = input_channels
-		self.hidden_channels = hidden_channels
+		self.input_channels = int(input_channels)
+		self.hidden_channels = int(hidden_channels)
 		self.cell = BottleneckLSTMCell(self.input_channels, self.hidden_channels)
 		(h, c) = self.cell.init_hidden(batch_size, hidden=self.hidden_channels, shape=(height, width))
 		self.hidden_state = h
@@ -193,23 +194,23 @@ class SSD(nn.Module):
 		self.conv13 = conv_dw(512*alpha, 1024*alpha, 2)
 		self.bottleneck_lstm1 = BottleneckLSTM(input_channels=1024*alpha, hidden_channels=256*alpha, height=10, width=10, batch_size=1)
 		self.fmaps_1 = nn.Sequential(	
-			nn.Conv2d(in_channels=256*alpha, out_channels=128*alpha, kernel_size=1),
+			nn.Conv2d(in_channels=int(256*alpha), out_channels=int(128*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=128*alpha, out_channels=256*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.bottleneck_lstm2 = BottleneckLSTM(input_channels=256*alpha, hidden_channels=256*alpha, height=10, width=10, batch_size=1)
 		self.fmaps_2 = nn.Sequential(	
-			nn.Conv2d(in_channels=256*alpha, out_channels=64*alpha, kernel_size=1),
+			nn.Conv2d(in_channels=int(256*alpha), out_channels=int(64*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=64*alpha, out_channels=128*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.fmaps_3 = nn.Sequential(	
-			nn.Conv2d(in_channels=128*alpha, out_channels=64*alpha, kernel_size=1),
+			nn.Conv2d(in_channels=int(128*alpha), out_channels=int(64*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=64*alpha, out_channels=128*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.fmaps_4 = nn.Sequential(	
-			nn.Conv2d(in_channels=128*alpha, out_channels=32*alpha, kernel_size=1),
+			nn.Conv2d(in_channels=int(128*alpha), out_channels=int(32*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=32*alpha, out_channels=64*alpha, kernel_size=3, stride=2, padding=1),
 		)
@@ -219,7 +220,7 @@ class SSD(nn.Module):
 		SeperableConv2d(in_channels=256*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=128*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=128*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
-		nn.Conv2d(in_channels=64*alpha, out_channels=6 * 4, kernel_size=1),
+		nn.Conv2d(in_channels=int(64*alpha), out_channels=6 * 4, kernel_size=1),
 		])
 
 		self.classification_headers = nn.ModuleList([
@@ -228,7 +229,7 @@ class SSD(nn.Module):
 		SeperableConv2d(in_channels=256*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=128*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=128*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
-		nn.Conv2d(in_channels=64*alpha, out_channels=6 * num_classes, kernel_size=1),
+		nn.Conv2d(in_channels=int(64*alpha), out_channels=6 * num_classes, kernel_size=1),
 		])
 
 		logging.info("Initializing weights of ssd")
@@ -316,6 +317,14 @@ class MobileVOD(nn.Module):
 		x = self.pred_encoder(seq)
 		confidences, locations = self.pred_decoder(x)
 		return confidences , locations
+
+	def detach_hidden(self):
+		self.pred_decoder.bottleneck_lstm1.hidden_state.detach_()
+		self.pred_decoder.bottleneck_lstm1.cell_state.detach_()
+		self.pred_decoder.bottleneck_lstm2.hidden_state.detach_()
+		self.pred_decoder.bottleneck_lstm2.cell_state.detach_()
+		
+	
 		
 
 

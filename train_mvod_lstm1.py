@@ -39,7 +39,7 @@ parser.add_argument('--gamma', default=0.1, type=float,
 					help='Gamma update for SGD')
 parser.add_argument('--base_net_lr', default=None, type=float,
 					help='initial learning rate for base net.')
-parser.add_argument('--extra_layers_lr', default=None, type=float,
+parser.add_argument('--ssd_lr', default=None, type=float,
 					help='initial learning rate for the layers not in base net and prediction heads.')
 
 
@@ -71,6 +71,8 @@ parser.add_argument('--validation_epochs', default=5, type=int,
 					help='the number epochs')
 parser.add_argument('--debug_steps', default=100, type=int,
 					help='Set the debug log output frequency.')
+parser.add_argument('--sequence_length', default=10, type=int,
+					help='sequence_length of video to unfold')
 parser.add_argument('--use_cuda', default=True, type=str2bool,
 					help='Use CUDA to train model')
 
@@ -88,35 +90,29 @@ if args.use_cuda and torch.cuda.is_available():
 	logging.info("Use Cuda.")
 
 
-def train(loader, net, criterion, optimizer, device, debug_steps=10, epoch=-1):
+def train(loader, net, criterion, optimizer, device, debug_steps=100, epoch=-1, sequence_length=10):
 	net.train(True)
 	running_loss = 0.0
 	running_regression_loss = 0.0
 	running_classification_loss = 0.0
 	for i, data in enumerate(loader):
 		images, boxes, labels = data
-		for i in range(0,images.size()[0]):
-			image = torch.ones([1,images.size()[1],images.size()[2],images.size()[3]])
-			box = torch.ones([1,boxes.size()[1],boxes.size()[2],boxes.size()[3]])
-			label= torch.ones([1,labels.size()[1],labels.size()[2],labels.size()[3]])
-			image[0,:,:,:]=images[i]
-			box[0,:,:,:]=boxes[i]
-			label[0,;,;,;]=labels[i]
-			image = image.to(device)
-			box = box.to(device)
-			label = label.to(device)
+		images = images.to(device)
+		boxes = boxes.to(device)
+		labels = labels.to(device)
 
-			optimizer.zero_grad()
-			confidence, locations = net(image)
-			regression_loss, classification_loss = criterion(confidence, locations, label, box)  # TODO CHANGE BOXES
-			loss = regression_loss + classification_loss
-			loss.backward(retain_graph=True)
-			optimizer.step()
+		optimizer.zero_grad()
+		confidence, locations = net(images)
+		regression_loss, classification_loss = criterion(confidence, locations, labels, boxes)  # TODO CHANGE BOXES
+		loss = regression_loss + classification_loss
+		loss.backward(retain_graph=True)
+		optimizer.step()
 
-			running_loss += loss.item()
-			running_regression_loss += regression_loss.item()
-			running_classification_loss += classification_loss.item()
-		net.detach_hidden()
+		running_loss += loss.item()
+		running_regression_loss += regression_loss.item()
+		running_classification_loss += classification_loss.item()
+		if i%sequence_length == 0:
+			net.detach_hidden()
 		if i and i % debug_steps == 0:
 			avg_loss = running_loss / debug_steps
 			avg_reg_loss = running_regression_loss / debug_steps
@@ -130,6 +126,7 @@ def train(loader, net, criterion, optimizer, device, debug_steps=10, epoch=-1):
 			running_loss = 0.0
 			running_regression_loss = 0.0
 			running_classification_loss = 0.0
+	net.detach_hidden()
 
 
 def test(loader, net, criterion, device):
@@ -192,7 +189,7 @@ if __name__ == '__main__':
 	for dataset_path in args.datasets:
 		dataset = VOCDataset(dataset_path, transform=train_transform,
 								 target_transform=target_transform)
-		label_file = os.path.join(args.checkpoint_folder, "voc-model-labels.txt")
+		label_file = os.path.join("models/", "voc-model-labels.txt")
 		store_labels(label_file, dataset.class_names)
 		num_classes = len(dataset.class_names)
 	datasets.append(dataset)
@@ -244,7 +241,7 @@ if __name__ == '__main__':
 		{'params': [param for name, param in net.pred_decoder.named_parameters()], 'lr': ssd_lr},], lr=args.lr, momentum=args.momentum,
 								weight_decay=args.weight_decay)
 	logging.info(f"Learning rate: {args.lr}, Base net learning rate: {base_net_lr}, "
-				 + f"Extra Layers learning rate: {extra_layers_lr}.")
+				 + f"Extra Layers learning rate: {ssd_lr}.")
 
 	if args.scheduler == 'multi-step':
 		logging.info("Uses MultiStepLR scheduler.")
@@ -263,7 +260,7 @@ if __name__ == '__main__':
 	for epoch in range(last_epoch + 1, args.num_epochs):
 		scheduler.step()
 		train(train_loader, net, criterion, optimizer,
-			  device=DEVICE, debug_steps=args.debug_steps, epoch=epoch)
+			  device=DEVICE, debug_steps=args.debug_steps, epoch=epoch, sequence_length=args.sequence_length)
 		
 		if epoch % args.validation_epochs == 0 or epoch == args.num_epochs - 1:
 			val_loss, val_regression_loss, val_classification_loss = test(val_loader, net, criterion, DEVICE)
