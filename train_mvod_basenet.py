@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, ConcatDataset
 from torch.optim.lr_scheduler import CosineAnnealingLR, MultiStepLR
 
 from utils.misc import str2bool, Timer, freeze_net_layers, store_labels
-from network.mvod_basenet import MobileVOD, SSD_FPN, MobileNetV1, MatchPrior
+from network.mvod_basenet import MobileVOD, SSD, MobileNetV1, MatchPrior
 from datasets.voc_dataset import VOCDataset
 from network.multibox_loss import MultiboxLoss
 from config import mobilenetv1_ssd_config
@@ -18,8 +18,6 @@ from dataloaders.data_preprocessing import TrainAugmentation, TestTransform
 parser = argparse.ArgumentParser(
 	description='Mobile Video Object Detection (Bottleneck LSTM) Training With Pytorch')
 
-parser.add_argument("--net", default="mb1-ssd-lite", type=str,
-					help='network model')
 parser.add_argument('--datasets', nargs='+', help='Dataset directory path')
 parser.add_argument('--validation_dataset', help='Dataset directory path')
 parser.add_argument('--balance_data', action='store_true',
@@ -151,8 +149,8 @@ def test(loader, net, criterion, device):
 
 def initialize_model(pred_enc, pred_dec, save_dir):
 	if args.pretrained:
-		print("Loading weights from pretrained netwok")
-		pretrained_net_dict = torch.load(os.path.join(save_dir,'FramePredModels','frame_nums_lstm_'+str(num_frame), 'NetG_epoch-90.pth'))
+		logging.info("Loading weights from pretrained netwok")
+		pretrained_net_dict = torch.load(args.pretrained)
 
 		model_dict = pred_enc.state_dict()
 		# 1. filter out unnecessary keys
@@ -174,19 +172,7 @@ if __name__ == '__main__':
 	timer = Timer()
 
 	logging.info(args)
-	if args.net == 'mb1-ssd':
-		#create_net = create_mobilenetv1_ssd
-		config = mobilenetv1_ssd_config
-	elif args.net == 'mb1-ssd-lite':
-		#create_net = create_mobilenetv1_ssd_lite
-		config = mobilenetv1_ssd_config
-	elif args.net == 'mb2-ssd-lite':
-		#create_net = lambda num: create_mobilenetv2_ssd_lite(num, width_mult=args.mb2_width_mult)
-		config = mobilenetv1_ssd_config
-	else:
-		logging.fatal("The net type is wrong.")
-		parser.print_help(sys.stderr)
-		sys.exit(1)
+	config = mobilenetv1_ssd_config	#config file for priors etc.
 	train_transform = TrainAugmentation(config.image_size, config.image_mean, config.image_std)
 	target_transform = MatchPrior(config.priors, config.center_variance,
 								  config.size_variance, 0.5)
@@ -219,8 +205,8 @@ if __name__ == '__main__':
 							shuffle=False)
 	#num_classes = 30
 	logging.info("Build network.")
-	pred_enc = MobileNetV1(num_classes=num_classes, alpha = 1)
-	pred_dec = SSD_FPN(num_classes=num_classes, alpha = 1, is_test=False)
+	pred_enc = MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
+	pred_dec = SSD(num_classes=num_classes, alpha = args.width_mult, is_test=False)
 	if args.resume is None:
 		initialize_model(pred_enc, pred_dec, args.checkpoint_folder)
 		net = MobileVOD(pred_enc, pred_dec)
@@ -235,7 +221,7 @@ if __name__ == '__main__':
 	last_epoch = -1
 
 	base_net_lr = args.base_net_lr if args.base_net_lr is not None else args.lr
-	extra_layers_lr = args.extra_layers_lr if args.extra_layers_lr is not None else args.lr
+	ssd_lr = args.ssd_lr if args.ssd_lr is not None else args.lr
 	if args.freeze_net:
 		logging.info("Freeze net.")
 		for param in pred_enc.parameters():
@@ -243,14 +229,12 @@ if __name__ == '__main__':
 		for param in pred_dec.parameters():
 			param.requires_grad = False
 
-	
-
 	net.to(DEVICE)
 
 	criterion = MultiboxLoss(config.priors, iou_threshold=0.5, neg_pos_ratio=3,
 							 center_variance=0.1, size_variance=0.2, device=DEVICE)
-	optimizer = torch.optim.SGD([{'params': [param for name, param in net.pred_encoder.named_parameters()], 'lr': args.lr},
-		{'params': [param for name, param in net.pred_decoder.named_parameters()], 'lr': args.lr},], lr=args.lr, momentum=args.momentum,
+	optimizer = torch.optim.SGD([{'params': [param for name, param in net.pred_encoder.named_parameters()], 'lr': base_net_lr},
+		{'params': [param for name, param in net.pred_decoder.named_parameters()], 'lr': ssd_lr},], lr=args.lr, momentum=args.momentum,
 								weight_decay=args.weight_decay)
 	logging.info(f"Learning rate: {args.lr}, Base net learning rate: {base_net_lr}, "
 				 + f"Extra Layers learning rate: {extra_layers_lr}.")

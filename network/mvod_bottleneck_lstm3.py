@@ -77,7 +77,7 @@ class BottleneckLSTMCell(nn.Module):
 		self.Wci = None
 		self.Wcf = None
 		self.Wco = None
-		print("Initializing weights..")
+		logging.info("Initializing weights of lstm")
 		self._initialize_weights()
 
 	def _initialize_weights(self):
@@ -161,7 +161,7 @@ class MobileNetV1(nn.Module):
 			conv_dw(512*alpha, 512*alpha, 1),
 			conv_dw(512*alpha, 512*alpha, 1),
 			)
-		print("Initializing weights..")
+		logging.info("Initializing weights of base net")
 		self._initialize_weights()
 		#self.fc = nn.Linear(1024, num_classes)
 	def _initialize_weights(self):
@@ -180,9 +180,9 @@ class MobileNetV1(nn.Module):
 		return x
 
 
-class SSD_FPN(nn.Module):
+class SSD(nn.Module):
 	def __init__(self,num_classes, alpha = 1, is_test=False, config = None):
-		super(SSD_FPN, self).__init__()
+		super(SSD, self).__init__()
 		# Decoder
 		self.is_test = is_test
 		self.config = config
@@ -190,7 +190,7 @@ class SSD_FPN(nn.Module):
 		if is_test:
 			self.config = config
 			self.priors = config.priors.to(self.device)
-		self.conv13 = conv_dw(512*alpha, 1024*alpha, 1)
+		self.conv13 = conv_dw(512*alpha, 1024*alpha, 2)
 		self.bottleneck_lstm1 = BottleneckLSTM(input_channels=1024*alpha, hidden_channels=256*alpha, height=10, width=10, batch_size=1)
 		self.fmaps_1 = nn.Sequential(	
 			nn.Conv2d(in_channels=256*alpha, out_channels=128*alpha, kernel_size=1),
@@ -232,7 +232,7 @@ class SSD_FPN(nn.Module):
 		nn.Conv2d(in_channels=64*alpha, out_channels=6 * num_classes, kernel_size=1),
 		])
 
-		print("Initializing weights..")
+		logging.info("Initializing weights of ssd")
 		self._initialize_weights()
 
 	def _initialize_weights(self):

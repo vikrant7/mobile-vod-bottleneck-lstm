@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 import numpy as np
+import logging
 
 
 def SeperableConv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0):
@@ -88,7 +89,7 @@ class MobileNetV1(nn.Module):
 			conv_dw(512*alpha, 512*alpha, 1),
 			conv_dw(512*alpha, 512*alpha, 1),
 			)
-		print("Initializing weights..")
+		logging.info("Initializing weights of base net")
 		self._initialize_weights()
 		#self.fc = nn.Linear(1024, num_classes)
 	def _initialize_weights(self):
@@ -107,9 +108,9 @@ class MobileNetV1(nn.Module):
 		return x
 
 
-class SSD_FPN(nn.Module):
+class SSD(nn.Module):
 	def __init__(self,num_classes, alpha = 1, is_test=False, config = None):
-		super(SSD_FPN, self).__init__()
+		super(SSD, self).__init__()
 		# Decoder
 		self.is_test = is_test
 		self.config = config
@@ -157,7 +158,7 @@ class SSD_FPN(nn.Module):
 		nn.Conv2d(in_channels=256*alpha, out_channels=6 * num_classes, kernel_size=1),
 		])
 
-		print("Initializing weights..")
+		logging.info("Initializing weights of SSD")
 		self._initialize_weights()
 
 	def _initialize_weights(self):
