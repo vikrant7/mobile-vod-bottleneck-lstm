@@ -17,26 +17,26 @@ def SeperableConv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=
 	"""Replace Conv2d with a depthwise Conv2d and Pointwise Conv2d.
 	"""
 	return nn.Sequential(
-		nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=kernel_size,
-			   groups=in_channels, stride=stride, padding=padding),
+		nn.Conv2d(in_channels=int(in_channels), out_channels=int(in_channels), kernel_size=kernel_size,
+			   groups=int(in_channels), stride=stride, padding=padding),
 		nn.ReLU(),
-		nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
+		nn.Conv2d(in_channels=int(in_channels), out_channels=int(out_channels), kernel_size=1),
 	)
 
 def conv_bn(inp, oup, stride):
 			return nn.Sequential(
-				nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
-				nn.BatchNorm2d(oup),
+				nn.Conv2d(int(inp), int(oup), 3, stride, 1, bias=False),
+				nn.BatchNorm2d(int(oup)),
 				nn.ReLU(inplace=True)
 			)
 def conv_dw(inp, oup, stride):
 			return nn.Sequential(
-				nn.Conv2d(inp, inp, 3, stride, 1, groups=inp, bias=False),
-				nn.BatchNorm2d(inp),
+				nn.Conv2d(int(inp), int(inp), 3, stride, 1, groups=int(inp), bias=False),
+				nn.BatchNorm2d(int(inp)),
 				nn.ReLU(inplace=True),
 
-				nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
-				nn.BatchNorm2d(oup),
+				nn.Conv2d(int(inp), int(oup), 1, 1, 0, bias=False),
+				nn.BatchNorm2d(int(oup)),
 				nn.ReLU(inplace=True),
 			)
 class MatchPrior(object):
@@ -121,22 +121,22 @@ class SSD(nn.Module):
 		self.conv13 = conv_dw(512*alpha, 1024*alpha, 2)
 		#self.conv14 = conv_dw(1024*alpha,1024*alpha, 1)
 		self.fmaps_1 = nn.Sequential(	
-			nn.Conv2d(in_channels=1024*alpha, out_channels=256*alpha, kernel_size=1),
+			nn.Conv2d(in_channels=int(1024*alpha), out_channels=int(256*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=256*alpha, out_channels=512*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.fmaps_2 = nn.Sequential(	
-			nn.Conv2d(in_channels=512*alpha, out_channels=128*alpha, kernel_size=1),
+			nn.Conv2d(in_channels=int(512*alpha), out_channels=int(128*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=128*alpha, out_channels=256*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.fmaps_3 = nn.Sequential(	
-			nn.Conv2d(in_channels=256*alpha, out_channels=128*alpha, kernel_size=1),
+			nn.Conv2d(in_channels=int(256*alpha), out_channels=int(128*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=128*alpha, out_channels=256*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.fmaps_4 = nn.Sequential(	
-			nn.Conv2d(in_channels=256*alpha, out_channels=128*alpha, kernel_size=1),
+			nn.Conv2d(in_channels=int(256*alpha), out_channels=int(128*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=128*alpha, out_channels=256*alpha, kernel_size=3, stride=2, padding=1),
 		)
@@ -146,7 +146,7 @@ class SSD(nn.Module):
 		SeperableConv2d(in_channels=512*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=256*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=256*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
-		nn.Conv2d(in_channels=256*alpha, out_channels=6 * 4, kernel_size=1),
+		nn.Conv2d(in_channels=int(256*alpha), out_channels=6 * 4, kernel_size=1),
 		])
 
 		self.classification_headers = nn.ModuleList([
@@ -155,7 +155,7 @@ class SSD(nn.Module):
 		SeperableConv2d(in_channels=512*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=256*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=256*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
-		nn.Conv2d(in_channels=256*alpha, out_channels=6 * num_classes, kernel_size=1),
+		nn.Conv2d(in_channels=int(256*alpha), out_channels=6 * num_classes, kernel_size=1),
 		])
 
 		logging.info("Initializing weights of SSD")
