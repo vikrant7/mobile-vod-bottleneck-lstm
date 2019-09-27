@@ -203,16 +203,13 @@ class ImagenetDataset:
 
 	def __getitem__(self, index):
 		image_id = self.ids[index]
-		boxes, labels, is_not_valid = self._get_annotation(image_id)
-		if is_not_valid:
-			return 0,0,0,is_not_valid
-		else:
-			image = self._read_image(image_id)
-			if self.transform:
-				image, boxes, labels = self.transform(image, boxes, labels)
-			if self.target_transform:
-				boxes, labels = self.target_transform(boxes, labels)
-			return image, boxes, labels, is_not_valid
+		boxes, labels = self._get_annotation(image_id)
+		image = self._read_image(image_id)
+		if self.transform:
+			image, boxes, labels = self.transform(image, boxes, labels)
+		if self.target_transform:
+			boxes, labels = self.target_transform(boxes, labels)
+		return image, boxes, labels
 
 	def get_image(self, index):
 		image_id = self.ids[index]
@@ -237,17 +234,15 @@ class ImagenetDataset:
 		return ids
 
 	def _get_annotation(self, image_id):
-		image_id = image_id.split('.')[0]
 		if self.is_val:
 			annotation_file = self.root / f"Annotations/VID/val/{image_id}.xml"
 		else:
 			annotation_file = self.root / f"Annotations/VID/train/{image_id}.xml"
 		objects = ET.parse(annotation_file).findall("object")
-		num_objs = len(objects)
 
-		boxes = np.zeros((num_objs, 4), dtype=np.float32)
-		labels = np.zeros((num_objs), dtype=np.int64)
-		for idx, obj in enumerate(objects):
+		boxes = []
+		labels = []
+		for obj in objects:
 			class_name = obj.find('name').text.lower().strip()
 			# we're only concerned with clases in our list
 			if class_name in self._name_to_class:
@@ -258,27 +253,19 @@ class ImagenetDataset:
 				y1 = float(bbox.find('ymin').text) - 1
 				x2 = float(bbox.find('xmax').text) - 1
 				y2 = float(bbox.find('ymax').text) - 1
-				boxes[idx,:] = [x1, y1, x2, y2]
-				labels[idx] = self._class_to_ind[self._name_to_class[class_name]]
-
-				#labels.append(self._class_to_ind[self._name_to_class[class_name]])
-		#assert (boxes[:, 2] >= boxes[:, 0]).all()
-		#print(boxes, labels)		
-		#return(np.array(boxes, dtype=np.float32),
-		#		np.array(labels, dtype=np.int64))
-		if num_objs == 0:
-			return 0,0, True
-		else:
-			return boxes, labels, False
-
+				boxes.append([x1, y1, x2, y2])
+				labels.append(self._class_to_ind[self._name_to_class[class_name]])
+		return(np.array(boxes, dtype=np.float32),
+				np.array(labels, dtype=np.int64))
+		
 	def _read_image(self, image_id):
 		if self.is_val:
-			image_file = self.root / f"Data/VID/val/{image_id}"
+			image_file = self.root / f"Data/VID/val/{image_id}.JPEG"
 			image = cv2.imread(str(image_file))
 			image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 			return image
 		else:
-			image_file = self.root / f"Data/VID/train/{image_id}"
+			image_file = self.root / f"Data/VID/train/{image_id}.JPEG"
 			image = cv2.imread(str(image_file))
 			image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 			return image

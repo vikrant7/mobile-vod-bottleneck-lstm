@@ -94,38 +94,34 @@ def train(loader, net, criterion, optimizer, device, debug_steps=100, epoch=-1):
 	running_classification_loss = 0.0
 	count = 0
 	for i, data in enumerate(loader):
-		images, boxes, labels, is_not_valid = data
-		if is_not_valid:
-			count = count + 1
-			continue
-		else:
-			images = images.to(device)
-			boxes = boxes.to(device)
-			labels = labels.to(device)
+		images, boxes, labels= data
+		images = images.to(device)
+		boxes = boxes.to(device)
+		labels = labels.to(device)
 
-			optimizer.zero_grad()
-			confidence, locations = net(images)
-			regression_loss, classification_loss = criterion(confidence, locations, labels, boxes)  # TODO CHANGE BOXES
-			loss = regression_loss + classification_loss
-			loss.backward(retain_graph=True)
-			optimizer.step()
+		optimizer.zero_grad()
+		confidence, locations = net(images)
+		regression_loss, classification_loss = criterion(confidence, locations, labels, boxes)  # TODO CHANGE BOXES
+		loss = regression_loss + classification_loss
+		loss.backward(retain_graph=True)
+		optimizer.step()
 
-			running_loss += loss.item()
-			running_regression_loss += regression_loss.item()
-			running_classification_loss += classification_loss.item()
-			if i and (i-count) % debug_steps == 0:
-				avg_loss = running_loss / debug_steps
-				avg_reg_loss = running_regression_loss / debug_steps
-				avg_clf_loss = running_classification_loss / debug_steps
-				logging.info(
-					f"Epoch: {epoch}, Step: {i}, " +
-					f"Average Loss: {avg_loss:.4f}, " +
-					f"Average Regression Loss {avg_reg_loss:.4f}, " +
-					f"Average Classification Loss: {avg_clf_loss:.4f}"
-				)
-				running_loss = 0.0
-				running_regression_loss = 0.0
-				running_classification_loss = 0.0
+		running_loss += loss.item()
+		running_regression_loss += regression_loss.item()
+		running_classification_loss += classification_loss.item()
+		if i and i%debug_steps == 0:
+			avg_loss = running_loss / debug_steps
+			avg_reg_loss = running_regression_loss / debug_steps
+			avg_clf_loss = running_classification_loss / debug_steps
+			logging.info(
+				f"Epoch: {epoch}, Step: {i}, " +
+				f"Average Loss: {avg_loss:.4f}, " +
+				f"Average Regression Loss {avg_reg_loss:.4f}, " +
+				f"Average Classification Loss: {avg_clf_loss:.4f}"
+			)
+			running_loss = 0.0
+			running_regression_loss = 0.0
+			running_classification_loss = 0.0
 
 
 def val(loader, net, criterion, device):
@@ -135,23 +131,20 @@ def val(loader, net, criterion, device):
 	running_classification_loss = 0.0
 	num = 0
 	for _, data in enumerate(loader):
-		images, boxes, labels, is_not_valid = data
-		if is_not_valid:
-			continue
-		else:
-			images = images.to(device)
-			boxes = boxes.to(device)
-			labels = labels.to(device)
-			num += 1
+		images, boxes, labels = data
+		images = images.to(device)
+		boxes = boxes.to(device)
+		labels = labels.to(device)
+		num += 1
 
-			with torch.no_grad():
-				confidence, locations = net(images)
-				regression_loss, classification_loss = criterion(confidence, locations, labels, boxes)
-				loss = regression_loss + classification_loss
+		with torch.no_grad():
+			confidence, locations = net(images)
+			regression_loss, classification_loss = criterion(confidence, locations, labels, boxes)
+			loss = regression_loss + classification_loss
 
-			running_loss += loss.item()
-			running_regression_loss += regression_loss.item()
-			running_classification_loss += classification_loss.item()
+		running_loss += loss.item()
+		running_regression_loss += regression_loss.item()
+		running_classification_loss += classification_loss.item()
 	return running_loss / num, running_regression_loss / num, running_classification_loss / num
 
 def initialize_model(pred_enc, pred_dec, save_dir):
