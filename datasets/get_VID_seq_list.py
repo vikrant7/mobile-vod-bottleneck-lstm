@@ -15,7 +15,7 @@ dirs_test = ['/media/sine/space/vikrant/ILSVRC2015/Data/VID/test/']
 
 
 
-file_write_obj = open('train_VID_list.txt','w')
+file_write_obj = open('train_VID_seqs_list.txt','w')
 for dir in dirs:
 	seqs = np.sort(os.listdir(os.path.join('/media/sine/space/vikrant/ILSVRC2015/Data/VID/train/'+dir)))
 	for seq in seqs:
@@ -34,16 +34,18 @@ for dir in dirs:
 			else:
 				images.append(image_id)
 			if len(images)==10:
-				file_write_obj.writelines(relative_path+'/'+':')
+				seqs_list = relative_path+'/'+':'
 				for image_id in images:
-					file_write_obj.writelines(image_id+',')
-					file_write_obj.write('\n')
+					seqs_list = seqs_list + image_id+','
+				seqs_list = seqs_list[:-1]
+				file_write_obj.writelines(seqs_list)
+				file_write_obj.write('\n')
 				images = []
 			else:
 				continue
 
 file_write_obj.close()
-file_write_obj = open('val_VID_list.txt','w')
+file_write_obj = open('val_VID_seqs_list.txt','w')
 for dir in dirs_val:
 	seqs = np.sort(os.listdir(dir))
 	for seq in seqs:
@@ -60,17 +62,19 @@ for dir in dirs_val:
 			else:
 				images.append(image_id)
 			if len(images)==10:
-				file_write_obj.writelines(relative_path+'/'+':')
+				seqs_list = seq+'/'+':'
 				for image_id in images:
-					file_write_obj.writelines(image_id+',')
-					file_write_obj.write('\n')
+					seqs_list = seqs_list + image_id+','
+				seqs_list = seqs_list[:-1]
+				file_write_obj.writelines(seqs_list)
+				file_write_obj.write('\n')					
 				images = []
 			else:
 				continue
 
 
 file_write_obj.close()
-file_write_obj = open('test_VID_list.txt','w')
+file_write_obj = open('test_VID_seqs_list.txt','w')
 for dir in dirs_test:
 	seqs = np.sort(os.listdir(dir))
 	for seq in seqs:

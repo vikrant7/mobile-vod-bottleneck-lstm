@@ -183,7 +183,7 @@ class MobileNetV1(nn.Module):
 
 
 class SSD(nn.Module):
-	def __init__(self,num_classes, alpha = 1, is_test=False, config = None):
+	def __init__(self,num_classes, batch_size, alpha = 1, is_test=False, config = None):
 		super(SSD, self).__init__()
 		# Decoder
 		self.is_test = is_test
@@ -193,19 +193,19 @@ class SSD(nn.Module):
 			self.config = config
 			self.priors = config.priors.to(self.device)
 		self.conv13 = conv_dw(512*alpha, 1024*alpha, 2)
-		self.bottleneck_lstm1 = BottleneckLSTM(input_channels=1024*alpha, hidden_channels=256*alpha, height=10, width=10, batch_size=1)
+		self.bottleneck_lstm1 = BottleneckLSTM(input_channels=1024*alpha, hidden_channels=256*alpha, height=10, width=10, batch_size=batch_size)
 		self.fmaps_1 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(256*alpha), out_channels=int(128*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=128*alpha, out_channels=256*alpha, kernel_size=3, stride=2, padding=1),
 		)
-		self.bottleneck_lstm2 = BottleneckLSTM(input_channels=256*alpha, hidden_channels=256*alpha, height=10, width=10, batch_size=1)
+		self.bottleneck_lstm2 = BottleneckLSTM(input_channels=256*alpha, hidden_channels=256*alpha, height=10, width=10, batch_size=batch_size)
 		self.fmaps_2 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(256*alpha), out_channels=int(64*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=64*alpha, out_channels=128*alpha, kernel_size=3, stride=2, padding=1),
 		)
-		self.bottleneck_lstm3 = BottleneckLSTM(input_channels=128*alpha, hidden_channels=128*alpha, height=10, width=10, batch_size=1)
+		self.bottleneck_lstm3 = BottleneckLSTM(input_channels=128*alpha, hidden_channels=128*alpha, height=10, width=10, batch_size=batch_size)
 		self.fmaps_3 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(128*alpha), out_channels=int(64*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
