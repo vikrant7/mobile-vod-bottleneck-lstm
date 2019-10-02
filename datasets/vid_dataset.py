@@ -123,69 +123,7 @@ class VIDDataset:
 				seq_list.append(line.rstrip())
 		return seq_list
 
-	# def _get_annotation(self, image_seq):
-	# 	annotation_files = []
-	# 	image_path = image_seq.split(':')[0]
-	# 	image_ids = image_seq.split(':')[1].split(',')
-	# 	if self.is_val:
-	# 		for image_id in image_ids:
-	# 			annotation_file = self.root / f"Annotations/VID/val/{image_path}{image_id}.xml"
-	# 			annotation_files.append(annotation_file)
-	# 	else:
-	# 		for image_id in image_ids:
-	# 			annotation_file = self.root / f"Annotations/VID/train/{image_path}{image_id}.xml"
-	# 			annotation_files.append(annotation_file)
-	# 	boxes_seq = []
-	# 	labels_seq = []
-	# 	for annotation_file in annotation_files:
-	# 		objects = ET.parse(annotation_file).findall("object")
-	# 		boxes = []
-	# 		labels = []
-	# 		for object in objects:
-	# 			class_name = object.find('name').text.lower().strip()
-	# 			# we're only concerned with clases in our list
-	# 			if class_name in self._name_to_class:
-	# 				bbox = object.find('bndbox')
-
-	# 				# VIsC dataset format follows Matlab, in which indexes start from 0
-	# 				x1 = float(bbox.find('xmin').text) - 1
-	# 				y1 = float(bbox.find('ymin').text) - 1
-	# 				x2 = float(bbox.find('xmax').text) - 1
-	# 				y2 = float(bbox.find('ymax').text) - 1
-	# 				boxes.append([x1, y1, x2, y2])
-
-	# 				labels.append(self._class_to_ind[self._name_to_class[class_name]])
-
-	# 		boxes_seq.append(np.array(boxes, dtype=np.float32))
-	# 		labels_seq.append(np.array(labels, dtype=np.int64))
-	# 	return (np.array(boxes_seq, dtype=np.float32), np.array(labels_seq, dtype=np.int64))
-
-	# def _read_image(self, image_seq):
-	# 	if self.is_test:
-	# 		image_file = self.root / f"Data/VID/test/{image_seq}"
-	# 		image = cv2.imread(str(image_file))
-	# 		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-	# 		return image
-	# 	elif self.is_val:
-	# 		image_path = image_seq.split(':')[0]
-	# 		image_ids = image_seq.split(':')[1].split(',')
-	# 		images_seq = []
-	# 		for image_id in image_ids:
-	# 			image_file = self.root / f"Data/VID/val/{image_path}{image_id}.JPEG"
-	# 			image = cv2.imread(str(image_file))
-	# 			image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-	# 			images_seq.append(image)
-	# 		return images_seq
-	# 	else:
-	# 		image_path = image_seq.split(':')[0]
-	# 		image_ids = image_seq.split(':')[1].split(',')
-	# 		images_seq = []
-	# 		for image_id in image_ids:
-	# 			image_file = self.root / f"Data/VID/train/{image_path}{image_id}.JPEG"
-	# 			image = cv2.imread(str(image_file))
-	# 			image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-	# 			images_seq.append(image)
-	# 		return images_seq
+	
 
 #For only object classification and localization
 class ImagenetDataset:
