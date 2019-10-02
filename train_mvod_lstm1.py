@@ -10,7 +10,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR, MultiStepLR
 
 from utils.misc import str2bool, Timer, freeze_net_layers, store_labels
 from network.mvod_bottleneck_lstm1 import MobileVOD, SSD, MobileNetV1, MatchPrior
-from datasets.voc_dataset import VOCDataset
+from datasets.voc_dataset import VIDDataset
 from network.multibox_loss import MultiboxLoss
 from config import mobilenetv1_ssd_config
 from dataloaders.data_preprocessing import TrainAugmentation, TestTransform
@@ -19,17 +19,13 @@ parser = argparse.ArgumentParser(
 	description='Mobile Video Object Detection (Bottleneck LSTM) Training With Pytorch')
 
 parser.add_argument('--datasets', nargs='+', help='Dataset directory path')
-parser.add_argument('--validation_dataset', help='Dataset directory path')
-parser.add_argument('--balance_data', action='store_true',
-					help="Balance training data by down-sampling more frequent labels.")
-
 parser.add_argument('--freeze_net', action='store_true',
 					help="Freeze all the layers except the prediction head.")
 parser.add_argument('--width_mult', default=1.0, type=float,
 					help='Width Multiplifier')
 
 # Params for SGD
-parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.003, type=float,
 					help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float,
 					help='Momentum value for optim')
@@ -76,7 +72,7 @@ parser.add_argument('--sequence_length', default=10, type=int,
 parser.add_argument('--use_cuda', default=True, type=str2bool,
 					help='Use CUDA to train model')
 
-parser.add_argument('--checkpoint_folder', default='models/bottleneck_lstm1',
+parser.add_argument('--checkpoint_folder', default='models/',
 					help='Directory for saving checkpoint models')
 
 
@@ -185,23 +181,19 @@ if __name__ == '__main__':
 	test_transform = TestTransform(config.image_size, config.image_mean, config.image_std)
 
 	logging.info("Prepare training datasets.")
-	datasets = []
-	for dataset_path in args.datasets:
-		dataset = VOCDataset(dataset_path, transform=train_transform,
+	train_dataset = VIDDataset(args.datasets, transform=train_transform,
 								 target_transform=target_transform)
-		label_file = os.path.join("models/", "voc-model-labels.txt")
-		store_labels(label_file, dataset.class_names)
-		num_classes = len(dataset.class_names)
-	datasets.append(dataset)
+	label_file = os.path.join("models/", "vid-model-labels.txt")
+	store_labels(label_file, train_dataset.class_names)
+	num_classes = len(train_dataset.class_names)
 	logging.info(f"Stored labels into file {label_file}.")
-	train_dataset = ConcatDataset(datasets)
 	logging.info("Train dataset size: {}".format(len(train_dataset)))
 	train_loader = DataLoader(train_dataset, args.batch_size,
 							  num_workers=args.num_workers,
 							  shuffle=True)
 	logging.info("Prepare Validation datasets.")
-	val_dataset = VOCDataset(args.validation_dataset, transform=test_transform,
-								 target_transform=target_transform, is_test=True)
+	val_dataset = VIDDataset(args.datasets, transform=test_transform,
+								 target_transform=target_transform, is_val=True)
 	logging.info(val_dataset)
 	logging.info("validation dataset size: {}".format(len(val_dataset)))
 
@@ -237,7 +229,7 @@ if __name__ == '__main__':
 
 	criterion = MultiboxLoss(config.priors, iou_threshold=0.5, neg_pos_ratio=3,
 							 center_variance=0.1, size_variance=0.2, device=DEVICE)
-	optimizer = torch.optim.SGD([{'params': [param for name, param in net.pred_encoder.named_parameters()], 'lr': base_net_lr},
+	optimizer = torch.optim.RMSprop([{'params': [param for name, param in net.pred_encoder.named_parameters()], 'lr': base_net_lr},
 		{'params': [param for name, param in net.pred_decoder.named_parameters()], 'lr': ssd_lr},], lr=args.lr, momentum=args.momentum,
 								weight_decay=args.weight_decay)
 	logging.info(f"Learning rate: {args.lr}, Base net learning rate: {base_net_lr}, "
@@ -270,6 +262,6 @@ if __name__ == '__main__':
 				f"Validation Regression Loss {val_regression_loss:.4f}, " +
 				f"Validation Classification Loss: {val_classification_loss:.4f}"
 			)
-			model_path = os.path.join(args.checkpoint_folder, f"{args.net}-Epoch-{epoch}-Loss-{val_loss}.pth")
+			model_path = os.path.join(args.checkpoint_folder, f"lstm1-wm-{args.width_mult}/Epoch-{epoch}-Loss-{val_loss}.pth")
 			torch.save(net.state_dict(), model_path)
 			logging.info(f"Saved model {model_path}")

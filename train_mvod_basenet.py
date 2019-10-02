@@ -19,16 +19,11 @@ parser = argparse.ArgumentParser(
 	description='Mobile Video Object Detection (Bottleneck LSTM) Training With Pytorch')
 
 parser.add_argument('--datasets', help='Dataset directory path')
-parser.add_argument('--balance_data', action='store_true',
-					help="Balance training data by down-sampling more frequent labels.")
-
-parser.add_argument('--freeze_net', action='store_true',
-					help="Freeze all the layers except the prediction head.")
 parser.add_argument('--width_mult', default=1.0, type=float,
 					help='Width Multiplifier')
 
 # Params for SGD
-parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.003, type=float,
 					help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float,
 					help='Momentum value for optim')
@@ -39,7 +34,7 @@ parser.add_argument('--gamma', default=0.1, type=float,
 parser.add_argument('--base_net_lr', default=None, type=float,
 					help='initial learning rate for base net.')
 parser.add_argument('--ssd_lr', default=None, type=float,
-					help='initial learning rate for the layers not in base net and prediction heads.')
+					help='initial learning rate for the layers not in base net')
 
 
 # Params for loading pretrained basenet or checkpoints.
@@ -151,7 +146,6 @@ def initialize_model(pred_enc, pred_dec, save_dir):
 	if args.pretrained:
 		logging.info("Loading weights from pretrained netwok")
 		pretrained_net_dict = torch.load(args.pretrained)
-
 		model_dict = pred_enc.state_dict()
 		# 1. filter out unnecessary keys
 		pretrained_dict = {k: v for k, v in pretrained_net_dict.items() if k in model_dict}
@@ -218,18 +212,11 @@ if __name__ == '__main__':
 
 	base_net_lr = args.base_net_lr if args.base_net_lr is not None else args.lr
 	ssd_lr = args.ssd_lr if args.ssd_lr is not None else args.lr
-	if args.freeze_net:
-		logging.info("Freeze net.")
-		for param in pred_enc.parameters():
-			param.requires_grad = False
-		for param in pred_dec.parameters():
-			param.requires_grad = False
-
 	net.to(DEVICE)
 
 	criterion = MultiboxLoss(config.priors, iou_threshold=0.5, neg_pos_ratio=3,
 							 center_variance=0.1, size_variance=0.2, device=DEVICE)
-	optimizer = torch.optim.SGD([{'params': [param for name, param in net.pred_encoder.named_parameters()], 'lr': base_net_lr},
+	optimizer = torch.optim.RMSprop([{'params': [param for name, param in net.pred_encoder.named_parameters()], 'lr': base_net_lr},
 		{'params': [param for name, param in net.pred_decoder.named_parameters()], 'lr': ssd_lr},], lr=args.lr, momentum=args.momentum,
 								weight_decay=args.weight_decay)
 	logging.info(f"Learning rate: {args.lr}, Base net learning rate: {base_net_lr}, "
@@ -262,6 +249,6 @@ if __name__ == '__main__':
 				f"Validation Regression Loss {val_regression_loss:.4f}, " +
 				f"Validation Classification Loss: {val_classification_loss:.4f}"
 			)
-			model_path = os.path.join(args.checkpoint_folder, f"Epoch-{epoch}-Loss-{val_loss}.pth")
+			model_path = os.path.join(args.checkpoint_folder, f"basenet-wm-{args.width_mult}/Epoch-{epoch}-Loss-{val_loss}.pth")
 			torch.save(net.state_dict(), model_path)
 			logging.info(f"Saved model {model_path}")
