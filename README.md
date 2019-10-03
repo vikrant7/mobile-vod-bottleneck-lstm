@@ -127,7 +127,7 @@ Results
 
 #### Reported metrics:
 
-**TODO: Train model and report metric score** Due to limited GPU resource and the huge size of Imagenet VID 2015 dataset, training of the model is taking huge amount of time. I will report the metric score here once training is done. 
+**TODO: Train model and report metric score** Due to limited GPU resource and the huge size of Imagenet VID 2015 dataset, training of the model is taking huge amount of time. I will report the metric score here once training is done. Update : I have trained Basenet and now training of lstm1  is going on.
 
 References
 ----------
