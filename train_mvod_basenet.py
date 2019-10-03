@@ -156,7 +156,7 @@ def val(loader, net, criterion, device):
 		running_classification_loss += classification_loss.item()
 	return running_loss / num, running_regression_loss / num, running_classification_loss / num
 
-def initialize_model(pred_enc, pred_dec, save_dir):
+def initialize_model(pred_enc, pred_dec):
 	if args.pretrained:
 		logging.info("Loading weights from pretrained netwok")
 		pretrained_net_dict = torch.load(args.pretrained)
@@ -212,7 +212,7 @@ if __name__ == '__main__':
 	pred_enc = MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
 	pred_dec = SSD(num_classes=num_classes, alpha = args.width_mult, is_test=False)
 	if args.resume is None:
-		initialize_model(pred_enc, pred_dec, args.checkpoint_folder)
+		initialize_model(pred_enc, pred_dec)
 		net = MobileVOD(pred_enc, pred_dec)
 	else:
 		net = MobileVOD(pred_enc, pred_dec)

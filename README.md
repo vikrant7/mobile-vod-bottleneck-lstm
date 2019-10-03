@@ -130,8 +130,11 @@ Evaluation
 
 
 Evaluation script **`evaluate.py`** reports validation accuracy (mAP).
+For more info execute this command:
 
-**TODO: complete evaluation script**
+```sh
+python evaluate.py --help
+```
 
 
 Results
