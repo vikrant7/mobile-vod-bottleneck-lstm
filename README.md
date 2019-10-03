@@ -129,12 +129,14 @@ Evaluation
 ----------
 
 
-Evaluation script reports validation accuracy.
+Evaluation script **`evaluate.py`** reports validation accuracy (mAP).
+
+**TODO: complete evaluation script**
 
 
 Results
 -------
-#### Main Results as in the paper:
+#### Main Results according to the paper:
 
 
 |                                 | <sub>training data</sub>     | <sub>testing data</sub> | <sub>mAP@0.5</sub> |<sub>Params (M)</sub>|<sub>MAC (B)</sub>|
