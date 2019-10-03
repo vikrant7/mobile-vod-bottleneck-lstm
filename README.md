@@ -132,8 +132,8 @@ Results
 References
 ----------
 
-1. PyTorch Docs. [http://pytorch.org/docs/master](http://pytorch.org/docs/master)]
-2. PyTorch SSD [https://github.com/qfgaohao/pytorch-ssd](https://github.com/qfgaohao/pytorch-ssd)
+1. PyTorch Docs. [[http://pytorch.org/docs/master](http://pytorch.org/docs/master)]
+2. PyTorch SSD [[https://github.com/qfgaohao/pytorch-ssd](https://github.com/qfgaohao/pytorch-ssd)]
 
 
 License
