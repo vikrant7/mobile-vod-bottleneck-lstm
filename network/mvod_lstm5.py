@@ -120,8 +120,8 @@ class BottleneckLSTMCell(nn.Module):
 class BottleneckLSTM(nn.Module):
 	def __init__(self, input_channels, hidden_channels, height, width, batch_size):
 		super(BottleneckLSTM, self).__init__()
-		self.input_channels = input_channels
-		self.hidden_channels = hidden_channels
+		self.input_channels = int(input_channels)
+		self.hidden_channels = int(hidden_channels)
 		self.cell = BottleneckLSTMCell(self.input_channels, self.hidden_channels)
 		(h, c) = self.cell.init_hidden(batch_size, hidden=self.hidden_channels, shape=(height, width))
 		self.hidden_state = h

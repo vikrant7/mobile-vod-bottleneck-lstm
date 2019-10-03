@@ -80,7 +80,7 @@ As described in section 4.2 of the paper, first Bottleneck LSTM layer is placed 
 To train model with one Bottleneck LSTM layer execute following command:
 
 ```sh
-python train_mvod_lstm1.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained basenet model} --freeze_net True --width_mult 1 
+python train_mvod_lstm1.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained basenet model} --width_mult 1 --freeze_net
 ```
 Refer script docstring and inline comments in **`train_mvod_lstm1.py`** for understanding of execution.
 
@@ -90,7 +90,7 @@ As described in section 4.2 of the paper, second Bottleneck LSTM layer is placed
 To train model with two LSTM layers execute following command:
 
 ```sh
-python train_mvod_lstm2.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained basenet model} --freeze_net True --width_mult 1 
+python train_mvod_lstm2.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained lstm 1} --width_mult 1 --freeze_net 
 ```
 Refer script docstring and inline comments in **`train_mvod_lstm2.py`** for understanding of execution.
 
@@ -101,7 +101,7 @@ As described in section 4.2 of the paper, third Bottleneck LSTM layer is placed 
 To train model with three Bottleneck LSTM layers execute following command:
 
 ```sh
-python train_mvod_lstm3.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained bottleneck lstm 2} --freeze_net True --width_mult 1 
+python train_mvod_lstm3.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained lstm 2} --width_mult 1 --freeze_net
 ```
 Refer script docstring and inline comments in **`train_mvod_lstm3.py`** for understanding of execution.
 
@@ -111,9 +111,9 @@ As described in section 4.2 of the paper, a LSTM layer is placed after Feature M
 To train model with 3 Bottleneck LSTM layers and 1 LSTM layer execute following command:
 
 ```sh
-python train_mvod_lstm4.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained bottleneck lstm 3} --freeze_net True --width_mult 1 
+python train_mvod_lstm4.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained lstm 3} --width_mult 1 --freeze_net
 ```
-Refer script docstring and inline comments in **`train_mvod_lstm3.py`** for understanding of execution.
+Refer script docstring and inline comments in **`train_mvod_lstm4.py`** for understanding of execution.
 
 #### Basenet with 3 Bottleneck LSTM and 2 LSTM
 
@@ -121,9 +121,9 @@ As described in section 4.2 of the paper, second normal LSTM layer is placed aft
 To train model with 3 Bottleneck LSTM layers and 2 LSTM layer execute following command:
 
 ```sh
-python train_mvod_lstm5.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained bottleneck lstm 4} --freeze_net True --width_mult 1 
+python train_mvod_lstm5.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained lstm 4} --width_mult 1 --freeze_net
 ```
-Refer script docstring and inline comments in **`train_mvod_lstm3.py`** for understanding of execution.
+Refer script docstring and inline comments in **`train_mvod_lstm5.py`** for understanding of execution.
 
 Evaluation
 ----------

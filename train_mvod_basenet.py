@@ -248,7 +248,9 @@ if __name__ == '__main__':
 		logging.fatal(f"Unsupported Scheduler: {args.scheduler}.")
 		parser.print_help(sys.stderr)
 		sys.exit(1)
-
+	output_path = os.path.join(args.checkpoint_folder, f"basenet")
+	if not os.path.exists(output_path):
+		os.makedirs(os.path.join(output_path))
 	logging.info(f"Start training from epoch {last_epoch + 1}.")
 	for epoch in range(last_epoch + 1, args.num_epochs):
 		scheduler.step()
@@ -263,6 +265,6 @@ if __name__ == '__main__':
 				f"Validation Regression Loss {val_regression_loss:.4f}, " +
 				f"Validation Classification Loss: {val_classification_loss:.4f}"
 			)
-			model_path = os.path.join(args.checkpoint_folder, f"basenet-wm-{args.width_mult}/Epoch-{epoch}-Loss-{val_loss}.pth")
+			model_path = os.path.join(output_path, f"WM-{args.width_mult}-Epoch-{epoch}-Loss-{val_loss}.pth")
 			torch.save(net.state_dict(), model_path)
 			logging.info(f"Saved model {model_path}")
