@@ -1,1 +1,0 @@
-python train.py --datasets /media/sine/space/vikrant/VOCdevkit/VOC2007/ /media/sine/space/vikrant/VOCdevkit/VOC2012/ --validation_dataset /media/sine/space/vikrant/VOCdevkit/test/VOC2007/ --net mb1-ssd-lite  --batch_size 60 --num_epochs 200 --scheduler cosine --lr 0.01 --t_max 200

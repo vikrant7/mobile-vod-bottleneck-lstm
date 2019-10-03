@@ -35,7 +35,8 @@ Download Imagenet VID 2015 dataset from \[[link](http://bvisionweb1.cs.unc.edu/i
 To get list of training, validation and test dataset (make sure to change path of dataset in the scripts):
  * for basenet training run **`datasets/get_VID_list.py`** script.
  * for sequential training of LSTM layers run **`datasets/get_VID_seqs_list.py`** script.
-Note: Output of this scripts is already in the repo, so no need to run it again.
+
+**Note: Output of this scripts is already in the repo, so no need to run it again**
  
 
 Two custom Pytorch Dataset classes are written in **`datasets/vid_dataset.py`** which ingests this dataset and
@@ -116,7 +117,7 @@ Evaluation script reports validation accuracy.
 
 Results
 -------
-## Main Results as in the paper:
+#### Main Results as in the paper:
 
 
 |                                 | <sub>training data</sub>     | <sub>testing data</sub> | <sub>mAP@0.5</sub> |<sub>Params (M)</sub>|<sub>MAC (B)</sub>|
@@ -124,7 +125,7 @@ Results
 | <sub>Bottleneck LSTM</br>(width_mult = 1)</sub>                    | <sub>ImageNet VID train</sub> | <sub>ImageNet VID validation</sub> | 54.4   | 3.24	| 1.13	|
 | <sub>Bottleneck LSTM</br>(width_mult = 0.5)</sub>           | <sub>ImageNet VID train</sub> | <sub>ImageNet VID validation</sub> | 43.8    | 0.86	| 0.19	|
 
-## Reported metrics:
+#### Reported metrics:
 
 **TODO: Train model and report metric score** Due to limited GPU resource and the huge size of Imagenet VID 2015 dataset, training of the model is taking huge amount of time. I will report the metric score here once training is done. 
 
