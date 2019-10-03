@@ -34,6 +34,7 @@ Dataset
 -------
 
 Download Imagenet VID 2015 dataset from \[[link](http://bvisionweb1.cs.unc.edu/ilsvrc2015/download-videos-3j16.php​)\]
+
 To get list of training, validation and test dataset (make sure to change path of dataset in the scripts):
  * for basenet training run **`datasets/get_VID_list.py`** script.
  * for sequential training of LSTM layers run **`datasets/get_VID_seqs_list.py`** script.
@@ -149,7 +150,7 @@ Results
 
 #### Reported metrics:
 
-**TODO: Train model and report metric score** Due to limited GPU resource and the huge size of Imagenet VID 2015 dataset, training of the model is taking huge amount of time. I will report the metric score here once training is done. Update : I have trained Basenet and now training of lstm1  is going on.
+**TODO: Train model and report metric score.** Due to limited GPU resource and the huge size of Imagenet VID 2015 dataset, training of the model is taking huge amount of time. I will report the metric score here once training is done. Update : I have trained Basenet and now training of lstm1  is going on.
 
 References
 ----------
@@ -164,5 +165,3 @@ License
 BSD
 
 [1]: https://arxiv.org/abs/1711.06368
-
-
