@@ -35,11 +35,6 @@ def load_checkpoint(checkpoint_path):
     return torch.load(checkpoint_path)
 
 
-def freeze_net_layers(net):
-    for param in net.parameters():
-        param.requires_grad = False
-
-
 def store_labels(path, labels):
     with open(path, "w") as f:
         f.write("\n".join(labels))

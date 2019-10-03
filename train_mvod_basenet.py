@@ -1,3 +1,17 @@
+#!/usr/bin/python3
+"""Script for training the basenet which is mobilenet with ssd. As in mobilenet, here we use depthwise seperable convolutions 
+for reducing the computation without affecting accuracy much. Basenet is trained on Imagenet VID 2015 dataset.
+Few global variables defined here are explained:
+Global Variables
+----------------
+args : dict
+	Has all the options for changing various variables of the model as well as hyper-parameters for training.
+dataset : ImagenetDataset (torch.utils.data.Dataset, For more info see datasets/vid_dataset.py)
+optimizer : optim.SGD
+scheduler : CosineAnnealingLR, MultiStepLR (torch.optim.lr_scheduler)
+config : mobilenetv1_ssd_config (See config/mobilenetv1_ssd_config.py for more info, where you can change input size and ssd priors)
+loss : MultiboxLoss (See network/multibox_loss.py for more info)
+"""
 import argparse
 import os
 import logging
@@ -8,7 +22,7 @@ import torch
 from torch.utils.data import DataLoader, ConcatDataset
 from torch.optim.lr_scheduler import CosineAnnealingLR, MultiStepLR
 
-from utils.misc import str2bool, Timer, freeze_net_layers, store_labels
+from utils.misc import str2bool, Timer, store_labels
 from network.mvod_basenet import MobileVOD, SSD, MobileNetV1, MatchPrior
 from datasets.vid_dataset import ImagenetDataset
 from network.multibox_loss import MultiboxLoss
