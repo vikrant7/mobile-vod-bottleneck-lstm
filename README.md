@@ -157,6 +157,7 @@ References
 
 1. PyTorch Docs. [[http://pytorch.org/docs/master](http://pytorch.org/docs/master)]
 2. PyTorch SSD [[https://github.com/qfgaohao/pytorch-ssd](https://github.com/qfgaohao/pytorch-ssd)]
+3. LSTM Object Detection [[https://github.com/tensorflow/models/tree/master/research/lstm_object_detection](https://github.com/tensorflow/models/tree/master/research/lstm_object_detection)]
 
 
 License
