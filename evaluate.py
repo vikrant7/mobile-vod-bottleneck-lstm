@@ -171,6 +171,7 @@ if __name__ == '__main__':
 		print("Load Image: {:4f} seconds.".format(timer.end("Load Image")))
 		timer.start("Predict")
 		boxes, labels, probs = predictor.predict(image)
+		net.detach_hidden()
 		print("Prediction: {:4f} seconds.".format(timer.end("Predict")))
 		indexes = torch.ones(labels.size(0), 1, dtype=torch.float32) * i
 		results.append(torch.cat([
