@@ -13,6 +13,7 @@ import math
 import numpy as np
 import logging
 
+
 def SeperableConv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0):
 	"""Replace Conv2d with a depthwise Conv2d and Pointwise Conv2d.
 	"""
@@ -64,8 +65,8 @@ class BottleneckLSTMCell(nn.Module):
 
 		assert hidden_channels % 2 == 0
 
-		self.input_channels = int(input_channels)
-		self.hidden_channels = int(hidden_channels)
+		self.input_channels = input_channels
+		self.hidden_channels = hidden_channels
 		self.num_features = 4
 		self.W = nn.Conv2d(in_channels=self.input_channels, out_channels=self.input_channels, kernel_size=3, groups=self.input_channels, stride=1, padding=1)
 		self.Wy  = nn.Conv2d(int(self.input_channels+self.hidden_channels), self.hidden_channels, kernel_size=1)
@@ -119,8 +120,8 @@ class BottleneckLSTMCell(nn.Module):
 class BottleneckLSTM(nn.Module):
 	def __init__(self, input_channels, hidden_channels, height, width, batch_size):
 		super(BottleneckLSTM, self).__init__()
-		self.input_channels = int(input_channels)
-		self.hidden_channels = int(hidden_channels)
+		self.input_channels = input_channels
+		self.hidden_channels = hidden_channels
 		self.cell = BottleneckLSTMCell(self.input_channels, self.hidden_channels)
 		(h, c) = self.cell.init_hidden(batch_size, hidden=self.hidden_channels, shape=(height, width))
 		self.hidden_state = h
@@ -204,32 +205,35 @@ class SSD(nn.Module):
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=32*alpha, out_channels=64*alpha, kernel_size=3, stride=2, padding=1),
 		)
+		self.bottleneck_lstm3 = BottleneckLSTM(input_channels=64*alpha, hidden_channels=16*alpha, height=3, width=3, batch_size=batch_size)
 		self.fmaps_3 = nn.Sequential(	
-			nn.Conv2d(in_channels=int(64*alpha), out_channels=int(32*alpha), kernel_size=1),
+			nn.Conv2d(in_channels=int(16*alpha), out_channels=int(8*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
-			SeperableConv2d(in_channels=32*alpha, out_channels=64*alpha, kernel_size=3, stride=2, padding=1),
+			SeperableConv2d(in_channels=8*alpha, out_channels=16*alpha, kernel_size=3, stride=2, padding=1),
 		)
+		self.lstm4 = BottleneckLSTM(input_channels=16*alpha, hidden_channels=16*alpha, height=2, width=2, batch_size=batch_size)
 		self.fmaps_4 = nn.Sequential(	
-			nn.Conv2d(in_channels=int(64*alpha), out_channels=int(32*alpha), kernel_size=1),
+			nn.Conv2d(in_channels=int(16*alpha), out_channels=int(8*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
-			SeperableConv2d(in_channels=32*alpha, out_channels=64*alpha, kernel_size=3, stride=2, padding=1),
+			SeperableConv2d(in_channels=8*alpha, out_channels=16*alpha, kernel_size=3, stride=2, padding=1),
 		)
+		self.lstm5 = BottleneckLSTM(input_channels=16*alpha, hidden_channels=16*alpha, height=1, width=1, batch_size=batch_size)
 		self.regression_headers = nn.ModuleList([
 		SeperableConv2d(in_channels=512*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=256*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=64*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
-		SeperableConv2d(in_channels=64*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
-		SeperableConv2d(in_channels=64*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
-		nn.Conv2d(in_channels=int(64*alpha), out_channels=6 * 4, kernel_size=1),
+		SeperableConv2d(in_channels=16*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
+		SeperableConv2d(in_channels=16*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
+		nn.Conv2d(in_channels=int(16*alpha), out_channels=6 * 4, kernel_size=1),
 		])
 
 		self.classification_headers = nn.ModuleList([
 		SeperableConv2d(in_channels=512*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=256*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=64*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
-		SeperableConv2d(in_channels=64*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
-		SeperableConv2d(in_channels=64*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
-		nn.Conv2d(in_channels=int(64*alpha), out_channels=6 * num_classes, kernel_size=1),
+		SeperableConv2d(in_channels=16*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
+		SeperableConv2d(in_channels=16*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
+		nn.Conv2d(in_channels=int(16*alpha), out_channels=6 * num_classes, kernel_size=1),
 		])
 
 		logging.info("Initializing weights of ssd")
@@ -278,17 +282,19 @@ class SSD(nn.Module):
 		confidences.append(confidence)
 		locations.append(location)
 		x = self.fmaps_2(x)
-		#x=self.bottleneck_lstm3(x)
+		x=self.bottleneck_lstm3(x)
 		confidence, location = self.compute_header(header_index, x)
 		header_index += 1
 		confidences.append(confidence)
 		locations.append(location)
 		x = self.fmaps_3(x)
+		x = self.lstm4(x)
 		confidence, location = self.compute_header(header_index, x)
 		header_index += 1
 		confidences.append(confidence)
 		locations.append(location)
 		x = self.fmaps_4(x)
+		x = self.lstm5(x)
 		confidence, location = self.compute_header(header_index, x)
 		header_index += 1
 		confidences.append(confidence)
@@ -323,8 +329,13 @@ class MobileVOD(nn.Module):
 		self.pred_decoder.bottleneck_lstm1.cell_state.detach_()
 		self.pred_decoder.bottleneck_lstm2.hidden_state.detach_()
 		self.pred_decoder.bottleneck_lstm2.cell_state.detach_()
+		self.pred_decoder.bottleneck_lstm3.hidden_state.detach_()
+		self.pred_decoder.bottleneck_lstm3.cell_state.detach_()
+		self.pred_decoder.lstm4.hidden_state.detach_()
+		self.pred_decoder.lstm4.cell_state.detach_()
+		self.pred_decoder.lstm5.hidden_state.detach_()
+		self.pred_decoder.lstm5.cell_state.detach_()
 		
-	
 		
 
 

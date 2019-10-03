@@ -199,39 +199,39 @@ class SSD(nn.Module):
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=128*alpha, out_channels=256*alpha, kernel_size=3, stride=2, padding=1),
 		)
-		self.bottleneck_lstm2 = BottleneckLSTM(input_channels=256*alpha, hidden_channels=256*alpha, height=10, width=10, batch_size=batch_size)
+		self.bottleneck_lstm2 = BottleneckLSTM(input_channels=256*alpha, hidden_channels=64*alpha, height=5, width=5, batch_size=batch_size)
 		self.fmaps_2 = nn.Sequential(	
-			nn.Conv2d(in_channels=int(256*alpha), out_channels=int(64*alpha), kernel_size=1),
-			nn.ReLU(inplace=True),
-			SeperableConv2d(in_channels=64*alpha, out_channels=128*alpha, kernel_size=3, stride=2, padding=1),
-		)
-		self.bottleneck_lstm3 = BottleneckLSTM(input_channels=128*alpha, hidden_channels=128*alpha, height=10, width=10, batch_size=batch_size)
-		self.fmaps_3 = nn.Sequential(	
-			nn.Conv2d(in_channels=int(128*alpha), out_channels=int(64*alpha), kernel_size=1),
-			nn.ReLU(inplace=True),
-			SeperableConv2d(in_channels=64*alpha, out_channels=128*alpha, kernel_size=3, stride=2, padding=1),
-		)
-		self.fmaps_4 = nn.Sequential(	
-			nn.Conv2d(in_channels=int(128*alpha), out_channels=int(32*alpha), kernel_size=1),
+			nn.Conv2d(in_channels=int(64*alpha), out_channels=int(32*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
 			SeperableConv2d(in_channels=32*alpha, out_channels=64*alpha, kernel_size=3, stride=2, padding=1),
+		)
+		self.bottleneck_lstm3 = BottleneckLSTM(input_channels=64*alpha, hidden_channels=16*alpha, height=3, width=3, batch_size=batch_size)
+		self.fmaps_3 = nn.Sequential(	
+			nn.Conv2d(in_channels=int(16*alpha), out_channels=int(8*alpha), kernel_size=1),
+			nn.ReLU(inplace=True),
+			SeperableConv2d(in_channels=8*alpha, out_channels=16*alpha, kernel_size=3, stride=2, padding=1),
+		)
+		self.fmaps_4 = nn.Sequential(	
+			nn.Conv2d(in_channels=int(16*alpha), out_channels=int(8*alpha), kernel_size=1),
+			nn.ReLU(inplace=True),
+			SeperableConv2d(in_channels=8*alpha, out_channels=16*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.regression_headers = nn.ModuleList([
 		SeperableConv2d(in_channels=512*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=256*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
-		SeperableConv2d(in_channels=256*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
-		SeperableConv2d(in_channels=128*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
-		SeperableConv2d(in_channels=128*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
-		nn.Conv2d(in_channels=int(64*alpha), out_channels=6 * 4, kernel_size=1),
+		SeperableConv2d(in_channels=64*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
+		SeperableConv2d(in_channels=16*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
+		SeperableConv2d(in_channels=16*alpha, out_channels=6 * 4, kernel_size=3, padding=1),
+		nn.Conv2d(in_channels=int(16*alpha), out_channels=6 * 4, kernel_size=1),
 		])
 
 		self.classification_headers = nn.ModuleList([
 		SeperableConv2d(in_channels=512*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
 		SeperableConv2d(in_channels=256*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
-		SeperableConv2d(in_channels=256*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
-		SeperableConv2d(in_channels=128*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
-		SeperableConv2d(in_channels=128*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
-		nn.Conv2d(in_channels=int(64*alpha), out_channels=6 * num_classes, kernel_size=1),
+		SeperableConv2d(in_channels=64*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
+		SeperableConv2d(in_channels=16*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
+		SeperableConv2d(in_channels=16*alpha, out_channels=6 * num_classes, kernel_size=3, padding=1),
+		nn.Conv2d(in_channels=int(16*alpha), out_channels=6 * num_classes, kernel_size=1),
 		])
 
 		logging.info("Initializing weights of ssd")

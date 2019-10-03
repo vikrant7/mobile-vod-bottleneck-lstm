@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Script for training the MobileVOD with 2 LSTM layers. As in mobilenet, here we use depthwise seperable convolutions 
+"""Script for training the MobileVOD with 2 Bottleneck LSTM layers. As in mobilenet, here we use depthwise seperable convolutions 
 for reducing the computation without affecting accuracy much. Model is trained on Imagenet VID 2015 dataset.
 Here we unroll LSTM for 10 steps and gives 10 consecutive frames of video as input.
 Few global variables defined here are explained:
@@ -282,6 +282,6 @@ if __name__ == '__main__':
 				f"Validation Regression Loss {val_regression_loss:.4f}, " +
 				f"Validation Classification Loss: {val_classification_loss:.4f}"
 			)
-			model_path = os.path.join(args.checkpoint_folder, f"lstm2-wm-{args.width_mult}/Epoch-{epoch}-Loss-{val_loss}.pth")
+			model_path = os.path.join(args.checkpoint_folder, f"lstm2/WM-{args.width_mult}-Epoch-{epoch}-Loss-{val_loss}.pth")
 			torch.save(net.state_dict(), model_path)
 			logging.info(f"Saved model {model_path}")

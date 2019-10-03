@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Script for training the MobileVOD with 3 Bottleneck LSTM layers. As in mobilenet, here we use depthwise seperable convolutions 
+"""Script for training the MobileVOD with 3 Bottleneck LSTM layers and 1 LSTM layer. As in mobilenet, here we use depthwise seperable convolutions 
 for reducing the computation without affecting accuracy much. Model is trained on Imagenet VID 2015 dataset.
 Here we unroll LSTM for 10 steps and gives 10 consecutive frames of video as input.
 Few global variables defined here are explained:
@@ -24,7 +24,7 @@ from torch.utils.data import DataLoader, ConcatDataset
 from torch.optim.lr_scheduler import CosineAnnealingLR, MultiStepLR
 
 from utils.misc import str2bool, Timer, store_labels
-from network.mvod_bottleneck_lstm3 import MobileVOD, SSD, MobileNetV1, MatchPrior
+from network.mvod_lstm4 import MobileVOD, SSD, MobileNetV1, MatchPrior
 from datasets.vid_dataset import VIDDataset
 from network.multibox_loss import MultiboxLoss
 from config import mobilenetv1_ssd_config
@@ -245,6 +245,8 @@ if __name__ == '__main__':
 		net.pred_decoder.fmaps_1.requires_grad = False
 		net.pred_decoder.bottleneck_lstm2.requires_grad = False
 		net.pred_decoder.fmaps_2.requires_grad = False
+		net.pred_decoder.bottleneck_lstm3.requires_grad = False
+		net.pred_decoder.fmaps_3.requires_grad = False
 
 	net.to(DEVICE)
 
@@ -283,6 +285,6 @@ if __name__ == '__main__':
 				f"Validation Regression Loss {val_regression_loss:.4f}, " +
 				f"Validation Classification Loss: {val_classification_loss:.4f}"
 			)
-			model_path = os.path.join(args.checkpoint_folder, f"lstm3-wm/WM-{args.width_mult}-Epoch-{epoch}-Loss-{val_loss}.pth")
+			model_path = os.path.join(args.checkpoint_folder, f"lstm4/WM-{args.width_mult}-Epoch-{epoch}-Loss-{val_loss}.pth")
 			torch.save(net.state_dict(), model_path)
 			logging.info(f"Saved model {model_path}")

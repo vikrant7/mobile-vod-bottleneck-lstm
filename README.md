@@ -17,7 +17,9 @@ Introduction
 ------------
 
 This paper introduces an online model for object detection in videos designed to run in real-time on low-powered mobile and embedded devices. Proposed approach combines fast single-image object detection with convolutional long short term memory (LSTM) layers to create an interweaved recurrent-convolutional architecture. 
+
 Additionally, authors propose an efficient Bottleneck-LSTM layer that significantly reduces computational cost compared to regular LSTMs. This network achieves temporal awareness by using Bottleneck-LSTMs to refine and propagate feature maps across frames. 
+
 This approach is substantially faster than existing detection methods in video, outperforming the fastest single-frame models in model size and computational cost while attaining accuracy comparable to much more expensive single-frame models on the Imagenet VID 2015 dataset. This model reaches a real-time inference speed of up to 15 FPS on a mobile CPU.
 
 Dependencies
@@ -47,7 +49,11 @@ Training
 --------
 
 Make sure to be in python 3.6+ environment with all the dependencies installed.
+
+As described in section 4.2 of the paper, model has two types of LSTM layers, one is Bottleneck LSTM layer which reduces the number of channels by 0.25 and the other is normal Conv LSTM which has same number of channels as output as that of input.
+
 Training of multiple Conv LSTM layers is done in sequencial order i.e. fine tune and fix all the layers before the newly added LSTM layer.
+
 Before saving the checkpoint model, model gets validated on the validation set. All the checkpoint models are saved in **`models`** directory.
 
 #### Basenet
@@ -64,49 +70,76 @@ For more help on command line args, execute the following command:
 ```sh
 python train_mvod_basenet.py --help
 ```
-#### Bottleneck LSTM 1
+#### Basenet with 1 Bottleneck LSTM 
 
-Described in paper, first Bottleneck LSTM layer is placed after Conv13 layer and we freeze all the layers upto and including Conv13 layer.
-To train model with one LSTM layer execute following command:
+As described in section 4.2 of the paper, first Bottleneck LSTM layer is placed after Conv13 layer and we freeze all the layers upto and including Conv13 layer.
+To train model with one Bottleneck LSTM layer execute following command:
 
 ```sh
 python train_mvod_lstm1.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained basenet model} --freeze_net True --width_mult 1 
 ```
-Here, freeze_net command line argument freezes the model as descriped in the paper. Make sure to keep batch size same in lstm1, lstm2 and lstm3 training as the size of hidden and cell state of LSTM layers should be consistent while training. Also, make sure to keep width multiplier same.
+Here, freeze_net command line argument freezes the model as descriped in the paper. Make sure to keep batch size same in lstm1, lstm2, lstm3, lstm4 and lstm5 training as the size of hidden and cell state of LSTM layers should be consistent while training. Also, make sure to keep width multiplier same.
 
 By default, GPU is used for training.
 
 Refer script docstring and inline comments in **`train_mvod_lstm1.py`** for understanding of execution.
 
-#### Bottleneck LSTM 2
+#### Basenet with 2 Bottleneck LSTM
 
-Described in paper, first Bottleneck LSTM layer is placed after Conv13 layer and we freeze all the layers upto and including Conv13 layer.
+As described in section 4.2 of the paper, second Bottleneck LSTM layer is placed after Feature Map 1 layer and we freeze all the layers upto and including Feature Map 1 layer.
 To train model with two LSTM layers execute following command:
 
 ```sh
 python train_mvod_lstm2.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained basenet model} --freeze_net True --width_mult 1 
 ```
-Make sure to keep batch size same in lstm1, lstm2 and lstm3 training. Also, make sure to keep width multiplier same.
+Make sure to keep batch size same in lstm1, lstm2, lstm3, lstm4 and lstm5 training. Also, make sure to keep width multiplier same.
 
 By default, GPU is used for training.
 
 Refer script docstring and inline comments in **`train_mvod_lstm2.py`** for understanding of execution.
 
 
-#### Bottleneck LSTM 3
+#### Basenet with 3 Bottleneck LSTM
 
-Described in paper, first Bottleneck LSTM layer is placed after Conv13 layer and we freeze all the layers upto and including Conv13 layer.
-To train model with three LSTM layers execute following command:
+As described in section 4.2 of the paper, third Bottleneck LSTM layer is placed after Feature Map 2 layer and we freeze all the layers upto and including Feature Map 2 layer.
+To train model with three Bottleneck LSTM layers execute following command:
 
 ```sh
 python train_mvod_lstm3.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained bottleneck lstm 2} --freeze_net True --width_mult 1 
 ```
-Make sure to keep batch size same in lstm1, lstm2 and lstm3 training. Also, make sure to keep width multiplier same.
+Make sure to keep batch size same in lstm1, lstm2, lstm3, lstm4 and lstm5 training. Also, make sure to keep width multiplier same.
 
 By default, GPU is used for training.
 
 Refer script docstring and inline comments in **`train_mvod_lstm3.py`** for understanding of execution.
 
+#### Basenet with 3 Bottleneck LSTM and 1 LSTM
+
+As described in section 4.2 of the paper, a LSTM layer is placed after Feature Map 3 layer and we freeze all the layers upto and including Feature Map 3 layer.
+To train model with 3 Bottleneck LSTM layers and 1 LSTM layer execute following command:
+
+```sh
+python train_mvod_lstm4.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained bottleneck lstm 3} --freeze_net True --width_mult 1 
+```
+Make sure to keep batch size same in lstm1, lstm2, lstm3, lstm4 and lstm5 training. Also, make sure to keep width multiplier same.
+
+By default, GPU is used for training.
+
+Refer script docstring and inline comments in **`train_mvod_lstm3.py`** for understanding of execution.
+
+#### Basenet with 3 Bottleneck LSTM and 2 LSTM
+
+As described in section 4.2 of the paper, second normal LSTM layer is placed after Feature Map 4 layer and we freeze all the layers upto and including Feature Map 4 layer.
+To train model with 3 Bottleneck LSTM layers and 2 LSTM layer execute following command:
+
+```sh
+python train_mvod_lstm5.py --datasets {path to ILSVRC2015 root dir} --batch_size 10 --num_epochs 30 --pretrained {path to pretrained bottleneck lstm 4} --freeze_net True --width_mult 1 
+```
+Make sure to keep batch size same in lstm1, lstm2, lstm3, lstm4 and lstm5 training. Also, make sure to keep width multiplier same.
+
+By default, GPU is used for training.
+
+Refer script docstring and inline comments in **`train_mvod_lstm3.py`** for understanding of execution.
 
 Evaluation
 ----------
