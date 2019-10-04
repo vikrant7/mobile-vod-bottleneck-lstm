@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+"""Script for creating basenet with three Bottleneck LSTM layer after conv 13 and feature map 1 & 2 resp.
+"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -16,6 +19,14 @@ import logging
 
 def SeperableConv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0):
 	"""Replace Conv2d with a depthwise Conv2d and Pointwise Conv2d.
+	Arguments:
+		in_channels : number of channels of input
+		out_channels : number of channels of output
+		kernel_size : kernel size for depthwise convolution
+		stride : stride for depthwise convolution
+		padding : padding for depthwise convolution
+	Returns:
+		object of class torch.nn.Sequential
 	"""
 	return nn.Sequential(
 		nn.Conv2d(in_channels=int(in_channels), out_channels=int(in_channels), kernel_size=kernel_size,
@@ -25,13 +36,30 @@ def SeperableConv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=
 	)
 
 def conv_bn(inp, oup, stride):
-			return nn.Sequential(
+	"""3x3 conv with batchnorm and relu
+	Arguments:
+		inp : number of channels of input
+		oup : number of channels of output
+		stride : stride for depthwise convolution
+	Returns:
+		object of class torch.nn.Sequential
+	"""
+	return nn.Sequential(
 				nn.Conv2d(int(inp), int(oup), 3, stride, 1, bias=False),
 				nn.BatchNorm2d(int(oup)),
 				nn.ReLU(inplace=True)
 			)
 def conv_dw(inp, oup, stride):
-			return nn.Sequential(
+	"""Replace Conv2d with a depthwise Conv2d and Pointwise Conv2d having batchnorm and relu layers in between.
+	Here kernel size is fixed at 3.
+	Arguments:
+		inp : number of channels of input
+		oup : number of channels of output
+		stride : stride for depthwise convolution
+	Returns:
+		object of class torch.nn.Sequential
+	"""
+	return nn.Sequential(
 				nn.Conv2d(int(inp), int(inp), 3, stride, 1, groups=int(inp), bias=False),
 				nn.BatchNorm2d(int(inp)),
 				nn.ReLU(inplace=True),
@@ -41,6 +69,13 @@ def conv_dw(inp, oup, stride):
 				nn.ReLU(inplace=True),
 			)
 class MatchPrior(object):
+	"""Matches priors based on the SSD prior config
+	Arguments:
+		center_form_priors : priors generated based on specs and image size in config file
+		center_variance : a float used to change the scale of center
+		size_variance : a float used to change the scale of size
+		iou_threshold : a float value of thresholf of IOU
+	"""
 	def __init__(self, center_form_priors, center_variance, size_variance, iou_threshold):
 		self.center_form_priors = center_form_priors
 		self.corner_form_priors = box_utils.center_form_to_corner_form(center_form_priors)
@@ -49,6 +84,13 @@ class MatchPrior(object):
 		self.iou_threshold = iou_threshold
 
 	def __call__(self, gt_boxes, gt_labels):
+	"""
+	Arguments:
+		gt_boxes : ground truth boxes
+		gt_labels : ground truth labels
+	Returns:
+		locations of form (batch_size, num_priors, 4) and labels
+	"""
 		if type(gt_boxes) is np.ndarray:
 			gt_boxes = torch.from_numpy(gt_boxes)
 		if type(gt_labels) is np.ndarray:
@@ -60,13 +102,18 @@ class MatchPrior(object):
 		return locations, labels
 
 class BottleneckLSTMCell(nn.Module):
+	""" Creates a LSTM layer cell
+	Arguments:
+		input_channels : variable used to contain value of number of channels in input
+		hidden_channels : variable used to contain value of number of channels in the hidden state of LSTM cell
+	"""
 	def __init__(self, input_channels, hidden_channels):
 		super(BottleneckLSTMCell, self).__init__()
 
 		assert hidden_channels % 2 == 0
 
-		self.input_channels = input_channels
-		self.hidden_channels = hidden_channels
+		self.input_channels = int(input_channels)
+		self.hidden_channels = int(hidden_channels)
 		self.num_features = 4
 		self.W = nn.Conv2d(in_channels=self.input_channels, out_channels=self.input_channels, kernel_size=3, groups=self.input_channels, stride=1, padding=1)
 		self.Wy  = nn.Conv2d(int(self.input_channels+self.hidden_channels), self.hidden_channels, kernel_size=1)
@@ -83,6 +130,10 @@ class BottleneckLSTMCell(nn.Module):
 		self._initialize_weights()
 
 	def _initialize_weights(self):
+		"""
+		Returns:
+			initialized weights of the model
+		"""
 		for m in self.modules():
 			if isinstance(m, nn.Conv2d):
 				n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -94,6 +145,14 @@ class BottleneckLSTMCell(nn.Module):
 				m.bias.data.zero_()
 			
 	def forward(self, x, h, c): #implemented as mentioned in paper here the only difference is  Wbi, Wbf, Wbc & Wbo are commuted all together in paper
+		"""
+		Arguments:
+			x : input tensor
+			h : hidden state tensor
+			c : cell state tensor
+		Returns:
+			output tensor after LSTM cell 
+		"""
 		x = self.W(x)
 		y = torch.cat((x, h),1) #concatenate input and hidden layers
 		i = self.Wy(y) #reduce to hidden layer size
@@ -106,6 +165,14 @@ class BottleneckLSTMCell(nn.Module):
 		return ch, cc
 
 	def init_hidden(self, batch_size, hidden, shape):
+		"""
+		Arguments:
+			batch_size : an int variable having value of batch size while training
+			hidden : an int variable having value of number of channels in hidden state
+			shape : an array containing shape of the hidden and cell state 
+		Returns:
+			cell state and hidden state
+		"""
 		if self.Wci is None:
 			self.Wci = Variable(torch.zeros(1, hidden, shape[0], shape[1])).cuda()
 			self.Wcf = Variable(torch.zeros(1, hidden, shape[0], shape[1])).cuda()
@@ -119,6 +186,16 @@ class BottleneckLSTMCell(nn.Module):
 
 class BottleneckLSTM(nn.Module):
 	def __init__(self, input_channels, hidden_channels, height, width, batch_size):
+		""" Creates Bottleneck LSTM layer
+		Arguments:
+			input_channels : variable having value of number of channels of input to this layer
+			hidden_channels : variable having value of number of channels of hidden state of this layer
+			height : an int variable having value of height of the input
+			width : an int variable having value of width of the input
+			batch_size : an int variable having value of batch_size of the input
+		Returns:
+			Output tensor of LSTM layer
+		"""
 		super(BottleneckLSTM, self).__init__()
 		self.input_channels = int(input_channels)
 		self.hidden_channels = int(hidden_channels)
@@ -134,6 +211,13 @@ class BottleneckLSTM(nn.Module):
 		return self.hidden_state
 
 def crop_like(x, target):
+	"""
+	Arguments:
+		x : a tensor whose shape has to be cropped
+		target : a tensor whose shape has to assert on x
+	Returns:
+		x having same shape as target
+	"""
 	if x.size()[2:] == target.size()[2:]:
 		return x
 	else:
@@ -147,6 +231,11 @@ def crop_like(x, target):
 
 class MobileNetV1(nn.Module):
 	def __init__(self, num_classes=1024, alpha=1):
+		"""torch.nn.module for mobilenetv1 upto conv12
+		Arguments:
+			num_classes : an int variable having value of total number of classes
+			alpha : a float used as width multiplier for channels of model
+		"""
 		super(MobileNetV1, self).__init__()
 		# upto conv 12
 		self.model = nn.Sequential(
@@ -167,6 +256,10 @@ class MobileNetV1(nn.Module):
 		self._initialize_weights()
 		#self.fc = nn.Linear(1024, num_classes)
 	def _initialize_weights(self):
+		"""
+		Returns:
+			initialized weights of the model
+		"""
 		for m in self.modules():
 			if isinstance(m, nn.Conv2d):
 				n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -178,12 +271,26 @@ class MobileNetV1(nn.Module):
 				m.bias.data.zero_()
 			
 	def forward(self, x):
+		"""
+		Arguments:
+			x : a tensor which is used as input for the model
+		Returns:
+			a tensor which is output of the model 
+		"""
 		x = self.model(x)
 		return x
 
 
 class SSD(nn.Module):
 	def __init__(self,num_classes, batch_size, alpha = 1, is_test=False, config = None):
+		"""
+		Arguments:
+			num_classes : an int variable having value of total number of classes
+			batch_size : an int variable having value of batch size
+			alpha : a float used as width multiplier for channels of model
+			is_Test : a bool used to make model ready for testing
+			config : a dict containing all the configuration parameters 
+		"""
 		super(SSD, self).__init__()
 		# Decoder
 		self.is_test = is_test
@@ -238,6 +345,10 @@ class SSD(nn.Module):
 		self._initialize_weights()
 
 	def _initialize_weights(self):
+		"""
+		Returns:
+			initialized weights of the model
+		"""
 		for m in self.modules():
 			if isinstance(m, nn.Conv2d):
 				n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -249,6 +360,13 @@ class SSD(nn.Module):
 				m.bias.data.zero_()
 			
 	def compute_header(self, i, x): #ssd method to calculate headers
+		"""
+		Arguments:
+			i : an int used to use particular classification and regression layer
+			x : a tensor used as input to layers
+		Returns:
+			locations and confidences of the predictions
+		"""
 		confidence = self.classification_headers[i](x)
 		confidence = confidence.permute(0, 2, 3, 1).contiguous()
 		confidence = confidence.view(confidence.size(0), -1, self.num_classes)
@@ -260,6 +378,14 @@ class SSD(nn.Module):
 		return confidence, location
 
 	def forward(self, x):
+		"""
+		Arguments:
+			x : a tensor which is used as input for the model
+		Returns:
+			confidences and locations of predictions made by model during training
+			or
+			confidences and boxes of predictions made by model during testing
+		"""
 		confidences = []
 		locations = []
 		header_index=0
@@ -309,18 +435,35 @@ class SSD(nn.Module):
 			return confidences, locations
 
 class MobileVOD(nn.Module):
+	"""
+		Module to join encoder and decoder of predictor model
+	"""
 	def __init__(self, pred_enc, pred_dec):
+		"""
+		Arguments:
+			pred_enc : an object of MobilenetV1 class
+			pred_dec : an object of SSD class
+		"""
 		super(MobileVOD, self).__init__()
 		self.pred_encoder = pred_enc
 		self.pred_decoder = pred_dec
 		
 
 	def forward(self, seq):
+		"""
+		Arguments:
+			seq : a tensor used as input to the model  
+		Returns:
+			confidences and locations of predictions made by model
+		"""
 		x = self.pred_encoder(seq)
 		confidences, locations = self.pred_decoder(x)
 		return confidences , locations
 
 	def detach_hidden(self):
+		"""
+		Detaches hidden state and cell state of all the LSTM layers from the graph
+		"""
 		self.pred_decoder.bottleneck_lstm1.hidden_state.detach_()
 		self.pred_decoder.bottleneck_lstm1.cell_state.detach_()
 		self.pred_decoder.bottleneck_lstm2.hidden_state.detach_()

@@ -102,6 +102,17 @@ if args.use_cuda and torch.cuda.is_available():
 
 
 def train(loader, net, criterion, optimizer, device, debug_steps=100, epoch=-1, sequence_length=10):
+	""" Train model
+	Arguments:
+		net : object of MobileVOD class
+		loader : validation data loader object
+		criterion : Loss function to use
+		device : device on which computation is done
+		optimizer : optimizer to optimize model
+		debug_steps : number of steps after which model needs to debug
+		sequence_length : unroll length of model
+		epoch : current epoch number
+	"""
 	net.train(True)
 	running_loss = 0.0
 	running_regression_loss = 0.0
@@ -141,6 +152,15 @@ def train(loader, net, criterion, optimizer, device, debug_steps=100, epoch=-1, 
 
 
 def val(loader, net, criterion, device):
+	""" Validate model
+	Arguments:
+		net : object of MobileVOD class
+		loader : validation data loader object
+		criterion : Loss function to use
+		device : device on which computation is done
+	Returns:
+		loss, regression loss, classification loss
+	"""
 	net.eval()
 	running_loss = 0.0
 	running_regression_loss = 0.0
@@ -166,6 +186,11 @@ def val(loader, net, criterion, device):
 	return running_loss / num, running_regression_loss / num, running_classification_loss / num
 
 def initialize_model(pred_enc, pred_dec):
+	""" Loads learned weights from pretrained checkpoint model
+	Arguments:
+		pred_enc : object of MobileNetV1
+		pred_dec : object of SSD
+	"""
 	if args.pretrained:
 		logging.info("Loading weights from pretrained netwok")
 		pretrained_net_dict = torch.load(args.pretrained)

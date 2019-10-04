@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+"""Script containing configuration parameters for SSD
+"""
 import numpy as np
 
 from utils.box_utils import SSDSpec, SSDBoxSizes, generate_ssd_priors

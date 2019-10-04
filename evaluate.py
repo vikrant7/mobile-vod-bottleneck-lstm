@@ -1,3 +1,13 @@
+#!/usr/bin/python3
+"""Script for evaluation of trained model on Imagenet VID 2015 dataset.
+Few global variables defined here are explained:
+Global Variables
+----------------
+args : dict
+	Has all the options for changing various variables of the model as well as parameters for evaluation
+dataset : ImagenetDataset (torch.utils.data.Dataset, For more info see datasets/vid_dataset.py)
+
+"""
 import torch
 from network import mvod_basenet, mvod_bottlneck_lstm1, mvod_bottlneck_lstm2, mvod_bottlneck_lstm3, mvod_lstm4, mvod_lstm5
 from network.predictor import Predictor 
@@ -29,6 +39,8 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() and args.use_cuda el
 
 
 def group_annotation_by_class(dataset):
+	""" Groups annotations of dataset by class
+	"""
 	true_case_stat = {}
 	all_gt_boxes = {}
 	all_difficult_cases = {}
@@ -64,6 +76,8 @@ def group_annotation_by_class(dataset):
 
 def compute_average_precision_per_class(num_true_cases, gt_boxes, difficult_cases,
 										prediction_file, iou_threshold, use_2007_metric):
+	""" Computes average precision per class
+	"""
 	with open(prediction_file) as f:
 		image_ids = []
 		boxes = []
@@ -118,7 +132,7 @@ if __name__ == '__main__':
 	timer = Timer()
 	class_names = [name.strip() for name in open(args.label_file).readlines()]
 	dataset = ImagenetDataset(args.dataset, is_val=True)
-	config = config = mobilenetv1_ssd_config
+	config = mobilenetv1_ssd_config
 	true_case_stat, all_gb_boxes, all_difficult_cases = group_annotation_by_class(dataset)
 	if args.net == 'basenet':
 		pred_enc = mvod_basenet.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
@@ -171,7 +185,10 @@ if __name__ == '__main__':
 		print("Load Image: {:4f} seconds.".format(timer.end("Load Image")))
 		timer.start("Predict")
 		boxes, labels, probs = predictor.predict(image)
-		net.detach_hidden()
+		if args.net == 'basenet':
+			continue
+		else:
+			net.detach_hidden()
 		print("Prediction: {:4f} seconds.".format(timer.end("Predict")))
 		indexes = torch.ones(labels.size(0), 1, dtype=torch.float32) * i
 		results.append(torch.cat([

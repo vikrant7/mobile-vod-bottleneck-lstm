@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+"""Script for creating classes for data preprocessing. It has three classes corresponding to training, testing and prediction.
+"""
 from transforms.transforms import *
 
 

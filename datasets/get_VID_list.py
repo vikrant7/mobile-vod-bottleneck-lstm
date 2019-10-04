@@ -1,3 +1,12 @@
+#!/usr/bin/python3
+"""Script for creating text file containing sequences of all the video frames. Here we neglect all the frames where 
+there is no object in it as it was done in the official implementation in tensorflow.
+Global Variables
+----------------
+dirs : containing list of all the training dataset folders
+dirs_val : containing path to val folder of dataset
+dirs_test : containing path to test folder of dataset
+"""
 import numpy as np
 import logging
 import pathlib

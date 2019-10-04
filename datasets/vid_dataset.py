@@ -1,3 +1,11 @@
+#!/usr/bin/python3
+"""Script for creating dataset of VID data. Here we have two classes: one for sequencial dataset preparation
+and other for normal object localization and classification task.
+Classes
+----------------
+VIDDataset : class for loading dataset in sequences of 10 consecutive video frames
+ImagenetDataset : class for loading dataset single frame at a time
+"""
 import numpy as np
 import logging
 import pathlib
