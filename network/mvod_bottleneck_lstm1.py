@@ -93,7 +93,7 @@ class BottleneckLSTMCell(nn.Module):
 				m.weight.data.fill_(1)
 				m.bias.data.zero_()
 			
-	def forward(self, x, h, c):
+	def forward(self, x, h, c): #implemented as mentioned in paper here the only difference is  Wbi, Wbf, Wbc & Wbo are commuted all together in paper
 		x = self.W(x)
 		y = torch.cat((x, h),1) #concatenate input and hidden layers
 		i = self.Wy(y) #reduce to hidden layer size
@@ -192,7 +192,7 @@ class SSD(nn.Module):
 		if is_test:
 			self.config = config
 			self.priors = config.priors.to(self.device)
-		self.conv13 = conv_dw(512*alpha, 1024*alpha, 2)
+		self.conv13 = conv_dw(512*alpha, 1024*alpha, 2) #not using conv14 as mentioned in paper
 		self.bottleneck_lstm1 = BottleneckLSTM(input_channels=1024*alpha, hidden_channels=256*alpha, height=10, width=10, batch_size=batch_size)
 		self.fmaps_1 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(256*alpha), out_channels=int(128*alpha), kernel_size=1),
@@ -246,7 +246,7 @@ class SSD(nn.Module):
 				m.weight.data.fill_(1)
 				m.bias.data.zero_()
 			
-	def compute_header(self, i, x):
+	def compute_header(self, i, x): #ssd method to calculate headers
 		confidence = self.classification_headers[i](x)
 		confidence = confidence.permute(0, 2, 3, 1).contiguous()
 		confidence = confidence.view(confidence.size(0), -1, self.num_classes)
@@ -272,13 +272,11 @@ class SSD(nn.Module):
 		confidences.append(confidence)
 		locations.append(location)
 		x = self.fmaps_1(x)
-		#x=self.bottleneck_lstm2(x)
 		confidence, location = self.compute_header(header_index, x)
 		header_index += 1
 		confidences.append(confidence)
 		locations.append(location)
 		x = self.fmaps_2(x)
-		#x=self.bottleneck_lstm3(x)
 		confidence, location = self.compute_header(header_index, x)
 		header_index += 1
 		confidences.append(confidence)
@@ -296,7 +294,7 @@ class SSD(nn.Module):
 		confidences = torch.cat(confidences, 1)
 		locations = torch.cat(locations, 1)
 		
-		if self.is_test:
+		if self.is_test: #while testing convert locations to boxes
 			confidences = F.softmax(confidences, dim=2)
 			boxes = box_utils.convert_locations_to_boxes(
 				locations, self.priors, self.config.center_variance, self.config.size_variance

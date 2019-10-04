@@ -119,7 +119,7 @@ class SSD(nn.Module):
 			self.config = config
 			self.priors = config.priors.to(self.device)
 		self.conv13 = conv_dw(512*alpha, 1024*alpha, 2)
-		#self.conv14 = conv_dw(1024*alpha,1024*alpha, 1)
+		#self.conv14 = conv_dw(1024*alpha,1024*alpha, 1) #not using conv14 as mentioned in paper
 		self.fmaps_1 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(1024*alpha), out_channels=int(256*alpha), kernel_size=1),
 			nn.ReLU(inplace=True),
