@@ -31,18 +31,20 @@ for dir in dirs:
 		seq_path = os.path.join('/media/sine/space/vikrant/ILSVRC2015/Data/VID/train/',dir,seq)
 		relative_path = dir + seq
 		image_list = np.sort(os.listdir(seq_path))
+		count = 0
 		for image in image_list:
 			image_id = image.split('.')[0]
 			anno_file = image_id + '.xml'
 			anno_path = os.path.join('/media/sine/space/vikrant/ILSVRC2015/Annotations/VID/train/',dir,seq,anno_file)
 			objects = ET.parse(anno_path).findall("object")
 			num_objs = len(objects)
-			if num_objs == 0:
+			if num_objs == 0: # discarding images without object
 				continue
 			else:
-				file_write_obj.writelines(relative_path+'/'+image_id)
-				file_write_obj.write('\n')
-
+				count = count + 1
+				if count<=20:
+					file_write_obj.writelines(relative_path+'/'+image_id)
+					file_write_obj.write('\n')
 file_write_obj.close()
 file_write_obj = open('val_VID_list.txt','w')
 for dir in dirs_val:
@@ -50,6 +52,7 @@ for dir in dirs_val:
 	for seq in seqs:
 		seq_path = os.path.join(dir,seq)
 		image_list = np.sort(os.listdir(seq_path))
+		count = 0
 		for image in image_list:
 			image_id = image.split('.')[0]
 			anno_file = image_id + '.xml'
@@ -59,8 +62,10 @@ for dir in dirs_val:
 			if num_objs == 0:
 				continue
 			else:
-				file_write_obj.writelines(seq+'/'+image_id)
-				file_write_obj.write('\n')
+				count = count + 1
+				if count<=20:
+					file_write_obj.writelines(seq+'/'+image_id)
+					file_write_obj.write('\n')
 
 
 file_write_obj.close()

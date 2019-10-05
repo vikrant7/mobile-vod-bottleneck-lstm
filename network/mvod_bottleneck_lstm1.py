@@ -84,13 +84,13 @@ class MatchPrior(object):
 		self.iou_threshold = iou_threshold
 
 	def __call__(self, gt_boxes, gt_labels):
-	"""
-	Arguments:
-		gt_boxes : ground truth boxes
-		gt_labels : ground truth labels
-	Returns:
-		locations of form (batch_size, num_priors, 4) and labels
-	"""
+		"""
+		Arguments:
+			gt_boxes : ground truth boxes
+			gt_labels : ground truth labels
+		Returns:
+			locations of form (batch_size, num_priors, 4) and labels
+		"""
 		if type(gt_boxes) is np.ndarray:
 			gt_boxes = torch.from_numpy(gt_boxes)
 		if type(gt_labels) is np.ndarray:

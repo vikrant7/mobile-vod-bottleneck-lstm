@@ -71,20 +71,22 @@ class VIDDataset:
 			boxes_seq = []
 			labels_seq = []
 			image_seq = self.seq_list[index]
-			image_path = image_seq.split(':')[0]
-			image_ids = image_seq.split(':')[1].split(',')
+			#image_path = image_seq.split(':')[0]
+			image_ids = image_seq.split(',')
 			for image_id in image_ids:
 				if self.is_val:
-					annotation_file = self.root / f"Annotations/VID/val/{image_path}{image_id}.xml"
-					image_file = self.root / f"Data/VID/val/{image_path}{image_id}.JPEG"
+					annotation_file = os.path.join(self.root,f"Annotations/VID/val/{image_id}.xml")
+					image_file = os.path.join(self.root , f"Data/VID/val/{image_id}.JPEG")
 				else:
-					annotation_file = self.root / f"Annotations/VID/train/{image_path}{image_id}.xml"
-					image_file = self.root / f"Data/VID/train/{image_path}{image_id}.JPEG"
+					annotation_file = self.root / f"Annotations/VID/train/{image_id}.xml"
+					image_file = self.root / f"Data/VID/train/{image_id}.JPEG"
 				image = cv2.imread(str(image_file))
 				image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 				objects = ET.parse(annotation_file).findall("object")
 				boxes = []
 				labels = []
+				if len(objects)==0:
+					print('no object')
 				for object in objects:
 					class_name = object.find('name').text.lower().strip()
 					# we're only concerned with clases in our list
