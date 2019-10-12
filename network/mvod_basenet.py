@@ -30,7 +30,7 @@ def SeperableConv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=
 	return nn.Sequential(
 		nn.Conv2d(in_channels=int(in_channels), out_channels=int(in_channels), kernel_size=kernel_size,
 			   groups=int(in_channels), stride=stride, padding=padding),
-		nn.ReLU(),
+		nn.ReLU6(),
 		nn.Conv2d(in_channels=int(in_channels), out_channels=int(out_channels), kernel_size=1),
 	)
 
@@ -46,7 +46,7 @@ def conv_bn(inp, oup, stride):
 	return nn.Sequential(
 				nn.Conv2d(int(inp), int(oup), 3, stride, 1, bias=False),
 				nn.BatchNorm2d(int(oup)),
-				nn.ReLU(inplace=True)
+				nn.ReLU6(inplace=True)
 			)
 def conv_dw(inp, oup, stride):
 	"""Replace Conv2d with a depthwise Conv2d and Pointwise Conv2d having batchnorm and relu layers in between.
@@ -61,11 +61,11 @@ def conv_dw(inp, oup, stride):
 	return nn.Sequential(
 				nn.Conv2d(int(inp), int(inp), 3, stride, 1, groups=int(inp), bias=False),
 				nn.BatchNorm2d(int(inp)),
-				nn.ReLU(inplace=True),
+				nn.ReLU6(inplace=True),
 
 				nn.Conv2d(int(inp), int(oup), 1, 1, 0, bias=False),
 				nn.BatchNorm2d(int(oup)),
-				nn.ReLU(inplace=True),
+				nn.ReLU6(inplace=True),
 			)
 class MatchPrior(object):
 	"""Matches priors based on the SSD prior config
@@ -83,13 +83,13 @@ class MatchPrior(object):
 		self.iou_threshold = iou_threshold
 
 	def __call__(self, gt_boxes, gt_labels):
-	"""
-	Arguments:
-		gt_boxes : ground truth boxes
-		gt_labels : ground truth labels
-	Returns:
-		locations of form (batch_size, num_priors, 4) and labels
-	"""
+		"""
+		Arguments:
+			gt_boxes : ground truth boxes
+			gt_labels : ground truth labels
+		Returns:
+			locations of form (batch_size, num_priors, 4) and labels
+		"""
 		if type(gt_boxes) is np.ndarray:
 			gt_boxes = torch.from_numpy(gt_boxes)
 		if type(gt_labels) is np.ndarray:
@@ -193,22 +193,22 @@ class SSD(nn.Module):
 		#self.conv14 = conv_dw(1024*alpha,1024*alpha, 1) #not using conv14 as mentioned in paper
 		self.fmaps_1 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(1024*alpha), out_channels=int(256*alpha), kernel_size=1),
-			nn.ReLU(inplace=True),
+			nn.ReLU6(inplace=True),
 			SeperableConv2d(in_channels=256*alpha, out_channels=512*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.fmaps_2 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(512*alpha), out_channels=int(128*alpha), kernel_size=1),
-			nn.ReLU(inplace=True),
+			nn.ReLU6(inplace=True),
 			SeperableConv2d(in_channels=128*alpha, out_channels=256*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.fmaps_3 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(256*alpha), out_channels=int(128*alpha), kernel_size=1),
-			nn.ReLU(inplace=True),
+			nn.ReLU6(inplace=True),
 			SeperableConv2d(in_channels=128*alpha, out_channels=256*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.fmaps_4 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(256*alpha), out_channels=int(128*alpha), kernel_size=1),
-			nn.ReLU(inplace=True),
+			nn.ReLU6(inplace=True),
 			SeperableConv2d(in_channels=128*alpha, out_channels=256*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.regression_headers = nn.ModuleList([

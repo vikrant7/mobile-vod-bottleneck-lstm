@@ -7,7 +7,7 @@ Global Variables
 args : dict
 	Has all the options for changing various variables of the model as well as hyper-parameters for training.
 dataset : ImagenetDataset (torch.utils.data.Dataset, For more info see datasets/vid_dataset.py)
-optimizer : optim.SGD
+optimizer : optim.RMSprop
 scheduler : CosineAnnealingLR, MultiStepLR (torch.optim.lr_scheduler)
 config : mobilenetv1_ssd_config (See config/mobilenetv1_ssd_config.py for more info, where you can change input size and ssd priors)
 loss : MultiboxLoss (See network/multibox_loss.py for more info)
@@ -37,14 +37,14 @@ parser.add_argument('--width_mult', default=1.0, type=float,
 					help='Width Multiplifier')
 
 # Params for SGD
-parser.add_argument('--lr', '--learning-rate', default=0.003, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.0003, type=float,
 					help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float,
 					help='Momentum value for optim')
 parser.add_argument('--weight_decay', default=5e-4, type=float,
-					help='Weight decay for SGD')
+					help='Weight decay')
 parser.add_argument('--gamma', default=0.1, type=float,
-					help='Gamma update for SGD')
+					help='Gamma update')
 parser.add_argument('--base_net_lr', default=None, type=float,
 					help='initial learning rate for base net.')
 parser.add_argument('--ssd_lr', default=None, type=float,
@@ -254,30 +254,30 @@ if __name__ == '__main__':
 
 	criterion = MultiboxLoss(config.priors, iou_threshold=0.5, neg_pos_ratio=3,
 							 center_variance=0.1, size_variance=0.2, device=DEVICE)
-	optimizer = torch.optim.SGD([{'params': [param for name, param in net.pred_encoder.named_parameters()], 'lr': base_net_lr},
-		{'params': [param for name, param in net.pred_decoder.named_parameters()], 'lr': ssd_lr},], lr=args.lr, momentum=args.momentum,
-								weight_decay=args.weight_decay)
+	optimizer = torch.optim.RMSprop([{'params': [param for name, param in net.pred_encoder.named_parameters()], 'lr': base_net_lr},
+		{'params': [param for name, param in net.pred_decoder.named_parameters()], 'lr': ssd_lr},], lr=args.lr,
+								weight_decay=args.weight_decay, momentum=args.momentum)
 	logging.info(f"Learning rate: {args.lr}, Base net learning rate: {base_net_lr}, "
 				 + f"Extra Layers learning rate: {ssd_lr}.")
 
-	if args.scheduler == 'multi-step':
-		logging.info("Uses MultiStepLR scheduler.")
-		milestones = [int(v.strip()) for v in args.milestones.split(",")]
-		scheduler = MultiStepLR(optimizer, milestones=milestones,
-													 gamma=0.1, last_epoch=last_epoch)
-	elif args.scheduler == 'cosine':
-		logging.info("Uses CosineAnnealingLR scheduler.")
-		scheduler = CosineAnnealingLR(optimizer, args.t_max, last_epoch=last_epoch)
-	else:
-		logging.fatal(f"Unsupported Scheduler: {args.scheduler}.")
-		parser.print_help(sys.stderr)
-		sys.exit(1)
+	# if args.scheduler == 'multi-step':
+	# 	logging.info("Uses MultiStepLR scheduler.")
+	# 	milestones = [int(v.strip()) for v in args.milestones.split(",")]
+	# 	scheduler = MultiStepLR(optimizer, milestones=milestones,
+	# 												 gamma=0.1, last_epoch=last_epoch)
+	# elif args.scheduler == 'cosine':
+	# 	logging.info("Uses CosineAnnealingLR scheduler.")
+	# 	scheduler = CosineAnnealingLR(optimizer, args.t_max, last_epoch=last_epoch)
+	# else:
+	# 	logging.fatal(f"Unsupported Scheduler: {args.scheduler}.")
+	# 	parser.print_help(sys.stderr)
+	# 	sys.exit(1)
 	output_path = os.path.join(args.checkpoint_folder, f"basenet")
 	if not os.path.exists(output_path):
 		os.makedirs(os.path.join(output_path))
 	logging.info(f"Start training from epoch {last_epoch + 1}.")
 	for epoch in range(last_epoch + 1, args.num_epochs):
-		scheduler.step()
+		#scheduler.step()
 		train(train_loader, net, criterion, optimizer,
 			  device=DEVICE, debug_steps=args.debug_steps, epoch=epoch)
 		
