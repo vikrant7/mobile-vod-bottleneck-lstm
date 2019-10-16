@@ -42,9 +42,8 @@ for dir in dirs:
 				continue
 			else:
 				count = count + 1
-				if count<=20:
-					file_write_obj.writelines(relative_path+'/'+image_id)
-					file_write_obj.write('\n')
+				file_write_obj.writelines(relative_path+'/'+image_id)
+				file_write_obj.write('\n')
 file_write_obj.close()
 file_write_obj = open('val_VID_list.txt','w')
 for dir in dirs_val:
@@ -69,14 +68,14 @@ for dir in dirs_val:
 
 
 file_write_obj.close()
-file_write_obj = open('test_VID_list.txt','w')
-for dir in dirs_test:
-	seqs = np.sort(os.listdir(dir))
-	for seq in seqs:
-		seq_path = os.path.join(dir,seq)
-		image_list = np.sort(os.listdir(seq_path))
-		for image in image_list:
-			file_write_obj.writelines(seq+image)
-			file_write_obj.write('\n')
+# file_write_obj = open('test_VID_list.txt','w')
+# for dir in dirs_test:
+# 	seqs = np.sort(os.listdir(dir))
+# 	for seq in seqs:
+# 		seq_path = os.path.join(dir,seq)
+# 		image_list = np.sort(os.listdir(seq_path))
+# 		for image in image_list:
+# 			file_write_obj.writelines(seq+image)
+# 			file_write_obj.write('\n')
 
-file_write_obj.close()
+# file_write_obj.close()
