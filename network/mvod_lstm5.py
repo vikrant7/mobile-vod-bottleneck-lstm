@@ -32,7 +32,7 @@ def SeperableConv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=
 	return nn.Sequential(
 		nn.Conv2d(in_channels=int(in_channels), out_channels=int(in_channels), kernel_size=kernel_size,
 			   groups=int(in_channels), stride=stride, padding=padding),
-		nn.ReLU(),
+		nn.ReLU6(),
 		nn.Conv2d(in_channels=int(in_channels), out_channels=int(out_channels), kernel_size=1),
 	)
 
@@ -48,7 +48,7 @@ def conv_bn(inp, oup, stride):
 	return nn.Sequential(
 				nn.Conv2d(int(inp), int(oup), 3, stride, 1, bias=False),
 				nn.BatchNorm2d(int(oup)),
-				nn.ReLU(inplace=True)
+				nn.ReLU6(inplace=True)
 			)
 def conv_dw(inp, oup, stride):
 	"""Replace Conv2d with a depthwise Conv2d and Pointwise Conv2d having batchnorm and relu layers in between.
@@ -63,11 +63,11 @@ def conv_dw(inp, oup, stride):
 	return nn.Sequential(
 				nn.Conv2d(int(inp), int(inp), 3, stride, 1, groups=int(inp), bias=False),
 				nn.BatchNorm2d(int(inp)),
-				nn.ReLU(inplace=True),
+				nn.ReLU6(inplace=True),
 
 				nn.Conv2d(int(inp), int(oup), 1, 1, 0, bias=False),
 				nn.BatchNorm2d(int(oup)),
-				nn.ReLU(inplace=True),
+				nn.ReLU6(inplace=True),
 			)
 class MatchPrior(object):
 	"""Matches priors based on the SSD prior config
@@ -160,9 +160,9 @@ class BottleneckLSTMCell(nn.Module):
 		b = self.Wi(i)	#depth wise 3*3
 		ci = torch.sigmoid(self.Wbi(b) + c * self.Wci)
 		cf = torch.sigmoid(self.Wbf(b) + c * self.Wcf)
-		cc = cf * c + ci * torch.relu(self.Wbc(b))
+		cc = cf * c + ci * torch.relu6(self.Wbc(b))
 		co = torch.sigmoid(self.Wbo(b) + cc * self.Wco)
-		ch = co * torch.relu(cc)
+		ch = co * torch.relu6(cc)
 		return ch, cc
 
 	def init_hidden(self, batch_size, hidden, shape):
@@ -304,25 +304,25 @@ class SSD(nn.Module):
 		self.bottleneck_lstm1 = BottleneckLSTM(input_channels=1024*alpha, hidden_channels=256*alpha, height=10, width=10, batch_size=batch_size)
 		self.fmaps_1 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(256*alpha), out_channels=int(128*alpha), kernel_size=1),
-			nn.ReLU(inplace=True),
+			nn.ReLU6(inplace=True),
 			SeperableConv2d(in_channels=128*alpha, out_channels=256*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.bottleneck_lstm2 = BottleneckLSTM(input_channels=256*alpha, hidden_channels=64*alpha, height=5, width=5, batch_size=batch_size)
 		self.fmaps_2 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(64*alpha), out_channels=int(32*alpha), kernel_size=1),
-			nn.ReLU(inplace=True),
+			nn.ReLU6(inplace=True),
 			SeperableConv2d(in_channels=32*alpha, out_channels=64*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.bottleneck_lstm3 = BottleneckLSTM(input_channels=64*alpha, hidden_channels=16*alpha, height=3, width=3, batch_size=batch_size)
 		self.fmaps_3 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(16*alpha), out_channels=int(8*alpha), kernel_size=1),
-			nn.ReLU(inplace=True),
+			nn.ReLU6(inplace=True),
 			SeperableConv2d(in_channels=8*alpha, out_channels=16*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.lstm4 = BottleneckLSTM(input_channels=16*alpha, hidden_channels=16*alpha, height=2, width=2, batch_size=batch_size)
 		self.fmaps_4 = nn.Sequential(	
 			nn.Conv2d(in_channels=int(16*alpha), out_channels=int(8*alpha), kernel_size=1),
-			nn.ReLU(inplace=True),
+			nn.ReLU6(inplace=True),
 			SeperableConv2d(in_channels=8*alpha, out_channels=16*alpha, kernel_size=3, stride=2, padding=1),
 		)
 		self.lstm5 = BottleneckLSTM(input_channels=16*alpha, hidden_channels=16*alpha, height=1, width=1, batch_size=batch_size)

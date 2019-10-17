@@ -8,7 +8,7 @@ Global Variables
 args : dict
 	Has all the options for changing various variables of the model as well as hyper-parameters for training.
 dataset : VIDDataset (torch.utils.data.Dataset, For more info see datasets/vid_dataset.py)
-optimizer : optim.Adam
+optimizer : optim.RMSprop
 scheduler : CosineAnnealingLR, MultiStepLR (torch.optim.lr_scheduler)
 config : mobilenetv1_ssd_config (See config/mobilenetv1_ssd_config.py for more info, where you can change input size and ssd priors)
 loss : MultiboxLoss (See network/multibox_loss.py for more info)
@@ -40,7 +40,7 @@ parser.add_argument('--width_mult', default=1.0, type=float,
 					help='Width Multiplifier')
 
 # Params for SGD
-parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.0003, type=float,
 					help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float,
 					help='Momentum value for optim')
@@ -271,9 +271,9 @@ if __name__ == '__main__':
 
 	criterion = MultiboxLoss(config.priors, iou_threshold=0.5, neg_pos_ratio=3,
 							 center_variance=0.1, size_variance=0.2, device=DEVICE)
-	optimizer = torch.optim.Adam([{'params': [param for name, param in net.pred_encoder.named_parameters()], 'lr': base_net_lr},
+	optimizer = torch.optim.RMSprop([{'params': [param for name, param in net.pred_encoder.named_parameters()], 'lr': base_net_lr},
 		{'params': [param for name, param in net.pred_decoder.named_parameters()], 'lr': ssd_lr},], lr=args.lr,
-								weight_decay=args.weight_decay) #Add for SGD , momentum=args.momentum
+								weight_decay=args.weight_decay, momentum=args.momentum)
 	logging.info(f"Learning rate: {args.lr}, Base net learning rate: {base_net_lr}, "
 				 + f"Extra Layers learning rate: {ssd_lr}.")
 
