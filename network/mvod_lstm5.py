@@ -123,7 +123,7 @@ class BottleneckLSTMCell(nn.Module):
 		self.Wbf = nn.Conv2d(self.hidden_channels, self.hidden_channels, 1, 1, 0, bias=False)
 		self.Wbc = nn.Conv2d(self.hidden_channels, self.hidden_channels, 1, 1, 0, bias=False)
 		self.Wbo = nn.Conv2d(self.hidden_channels, self.hidden_channels, 1, 1, 0, bias=False)
-		self.relu = nn.ReLU6(inplace=True)
+		self.relu = nn.ReLU6()
 		self.Wci = None
 		self.Wcf = None
 		self.Wco = None
