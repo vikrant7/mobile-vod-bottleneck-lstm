@@ -121,7 +121,7 @@ class BottleneckLSTMCell(nn.Module):
 		self.Wbf = nn.Conv2d(self.hidden_channels, self.hidden_channels, 1, 1, 0, bias=False)
 		self.Wbc = nn.Conv2d(self.hidden_channels, self.hidden_channels, 1, 1, 0, bias=False)
 		self.Wbo = nn.Conv2d(self.hidden_channels, self.hidden_channels, 1, 1, 0, bias=False)
-
+		self.relu = nn.ReLU6(inplace=True)
 		self.Wci = None
 		self.Wcf = None
 		self.Wco = None
@@ -158,9 +158,9 @@ class BottleneckLSTMCell(nn.Module):
 		b = self.Wi(i)	#depth wise 3*3
 		ci = torch.sigmoid(self.Wbi(b) + c * self.Wci)
 		cf = torch.sigmoid(self.Wbf(b) + c * self.Wcf)
-		cc = cf * c + ci * nn.ReLU6(self.Wbc(b))
+		cc = cf * c + ci * self.relu(self.Wbc(b))
 		co = torch.sigmoid(self.Wbo(b) + cc * self.Wco)
-		ch = co * nn.ReLU6(cc)
+		ch = co * self.relu(cc)
 		return ch, cc
 
 	def init_hidden(self, batch_size, hidden, shape):
