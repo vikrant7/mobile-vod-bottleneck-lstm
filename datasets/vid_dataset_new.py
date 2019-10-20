@@ -6,6 +6,7 @@ Classes
 VIDDataset : class for loading dataset in sequences of 10 consecutive video frames
 ImagenetDataset : class for loading dataset single frame at a time
 """
+import cPickle
 import numpy as np
 import logging
 import pathlib
@@ -137,12 +138,14 @@ class VIDDataset:
 #For only object classification and localization
 class ImagenetDataset:
 
-	def __init__(self, root, transform=None, target_transform=None, is_val=False, keep_difficult=False, label_file=None):
+	def __init__(self, data, root, transform=None, target_transform=None, is_val=False, keep_difficult=False, label_file=None):
 		"""Dataset for VID data.
 		Args:
-			root: the root of the ILSVRC2015 dataset, the directory contains the following sub-directories:
+			data: the path of the ILSVRC2015 dataset, the directory contains the following sub-directories:
 				Annotations, ImageSets, Data
+			root: the path of root directory of cache
 		"""
+		self.data = pathlib.Path(data)
 		self.root = pathlib.Path(root)
 		self.transform = transform
 		self.target_transform = target_transform
@@ -175,46 +178,55 @@ class ImagenetDataset:
 
 		self._name_to_class = {self._classes_map[i]: self._classes_names[i] for i in range(len(self._classes_names))}
 		self._class_to_ind = {classes_name: i for i, classes_name in enumerate(self._classes_names)}
+		self.db = self.gt_roidb() 
 
 	def __getitem__(self, index):
-		image_id = self.ids[index]
-		boxes, labels = self._get_annotation(image_id)
-		image = self._read_image(image_id)
+		data = self.db[index]
+		boxes = data['boxes']
+		labels = data['labels']
+		image = self._read_image(data['image'])
 		if self.transform:
 			image, boxes, labels = self.transform(image, boxes, labels)
 		if self.target_transform:
 			boxes, labels = self.target_transform(boxes, labels)
 		return image, boxes, labels
 
-	def get_image(self, index):
-		image_id = self.ids[index]
-		image = self._read_image(image_id)
-		if self.transform:
-			image, _ = self.transform(image)
-		return image
-
-	def get_annotation(self, index):
-		image_id = self.ids[index]
-		return image_id, self._get_annotation(image_id)
-
-	def __len__(self):
-		return len(self.ids)
-
-	@staticmethod
-	def _read_image_seq_ids(image_sets_file):
-		ids = []
-		with open(image_sets_file) as f:
-			for line in f:
-				ids.append(line.rstrip())
-		return ids
-
-	def _get_annotation(self, image_id):
-		if self.is_val:
-			annotation_file = self.root / f"Annotations/VID/val/{image_id}.xml"
+	def gt_roidb(self):
+		"""
+		return ground truth image regions database
+		:return: imdb[image_index]['boxes', 'gt_classes', 'gt_overlaps', 'flipped']
+		"""
+		if is_val:
+			cache_file = os.path.join(self.root, 'val_VID_gt_roidb.pkl')
 		else:
-			annotation_file = self.root / f"Annotations/VID/train/{image_id}.xml"
-		objects = ET.parse(annotation_file).findall("object")
+			cache_file = os.path.join(self.root, 'train_VID_gt_roidb.pkl')
+		if os.path.exists(cache_file):
+			with open(cache_file, 'rb') as fid:
+				roidb = cPickle.load(fid)
+			print '{} gt roidb loaded from {}'.format(self.name, cache_file)
+			return roidb
 
+		gt_roidb = [self.load_vid_annotation(index) for index in range(0, len(self.ids))]
+		with open(cache_file, 'wb') as fid:
+			cPickle.dump(gt_roidb, fid, cPickle.HIGHEST_PROTOCOL)
+		print 'wrote gt roidb to {}'.format(cache_file)
+
+		return gt_roidb
+
+	def load_vid_annotation(self, i):
+		"""
+		for a given index, load image and bounding boxes info from XML file
+		:param index: index of a specific image
+		:return: record['boxes', 'gt_classes', 'gt_overlaps', 'flipped']
+		"""
+		index = self.ids[i]
+		roi_rec = dict()
+		roi_rec['image'] = self.image_path_from_index(index)
+		if self.is_val:
+			annotation_file = self.data / f"Annotations/VID/val/{image_id}.xml"
+		else:
+			annotation_file = self.data / f"Annotations/VID/train/{image_id}.xml"
+		objects = ET.parse(annotation_file).findall("object")
 		boxes = []
 		labels = []
 		for obj in objects:
@@ -230,20 +242,37 @@ class ImagenetDataset:
 				y2 = float(bbox.find('ymax').text) - 1
 				boxes.append([x1, y1, x2, y2])
 				labels.append(self._class_to_ind[self._name_to_class[class_name]])
-		return(np.array(boxes, dtype=np.float32),
-				np.array(labels, dtype=np.int64))
-		
-	def _read_image(self, image_id):
+		boxes = np.array(boxes, dtype=np.float32)
+		labels = np.array(labels, dtype=np.int64)
+		roi_rec.update({'boxes': boxes,
+						'labels': gt_classes})
+		return roi_rec
+	def image_path_from_index(self, image_id):
+		"""
+		given image index, find out full path
+		:param index: index of a specific image
+		:return: full path of this image
+		"""
 		if self.is_val:
-			image_file = self.root / f"Data/VID/val/{image_id}.JPEG"
-			image = cv2.imread(str(image_file))
-			image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-			return image
+			image_file = self.data / f"Data/VID/val/{image_id}.JPEG"
 		else:
-			image_file = self.root / f"Data/VID/train/{image_id}.JPEG"
-			image = cv2.imread(str(image_file))
-			image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-			return image
+			image_file = self.data / f"Data/VID/train/{image_id}.JPEG"
+		return image_file
 
+	def __len__(self):
+		return len(self.ids)
+
+	@staticmethod
+	def _read_image_seq_ids(image_sets_file):
+		ids = []
+		with open(image_sets_file) as f:
+			for line in f:
+				ids.append(line.rstrip())
+		return ids
+
+	def _read_image(self, image_id):
+		image = cv2.imread(str(image_file))
+		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+		
 
 
