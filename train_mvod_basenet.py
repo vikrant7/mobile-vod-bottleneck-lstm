@@ -24,7 +24,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR, MultiStepLR
 
 from utils.misc import str2bool, Timer, store_labels
 from network.mvod_basenet import MobileVOD, SSD, MobileNetV1, MatchPrior
-from datasets.vid_dataset import ImagenetDataset
+from datasets.vid_dataset_new import ImagenetDataset
 from network.multibox_loss import MultiboxLoss
 from config import mobilenetv1_ssd_config
 from dataloaders.data_preprocessing import TrainAugmentation, TestTransform
@@ -33,6 +33,7 @@ parser = argparse.ArgumentParser(
 	description='Mobile Video Object Detection (Bottleneck LSTM) Training With Pytorch')
 
 parser.add_argument('--datasets', help='Dataset directory path')
+parser.add_argument('--cache_path', help='Cache directory path')
 parser.add_argument('--width_mult', default=1.0, type=float,
 					help='Width Multiplifier')
 
@@ -212,7 +213,7 @@ if __name__ == '__main__':
 	test_transform = TestTransform(config.image_size, config.image_mean, config.image_std)
 
 	logging.info("Prepare training datasets.")
-	train_dataset = ImagenetDataset(args.datasets, transform=train_transform,
+	train_dataset = ImagenetDataset(args.datasets, args.cache_path, transform=train_transform,
 								 target_transform=target_transform)
 	label_file = os.path.join(args.checkpoint_folder, "vid-model-labels.txt")
 	store_labels(label_file, train_dataset._classes_names)
@@ -223,7 +224,7 @@ if __name__ == '__main__':
 							  num_workers=args.num_workers,
 							  shuffle=True)
 	logging.info("Prepare Validation datasets.")
-	val_dataset = ImagenetDataset(args.datasets, transform=test_transform,
+	val_dataset = ImagenetDataset(args.datasets, args.cache_path, transform=test_transform,
 								 target_transform=target_transform, is_val=True)
 	logging.info(val_dataset)
 	logging.info("validation dataset size: {}".format(len(val_dataset)))
