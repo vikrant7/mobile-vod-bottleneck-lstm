@@ -47,33 +47,23 @@ def group_annotation_by_class(dataset):
 		image_id, annotation = dataset.get_annotation(i)
 		gt_boxes, classes = annotation
 		gt_boxes = torch.from_numpy(gt_boxes)
-		for i, difficult in enumerate(is_difficult):
+		for i in range(0,len(classes)):
 			class_index = int(classes[i])
 			gt_box = gt_boxes[i]
-			if not difficult:
-				true_case_stat[class_index] = true_case_stat.get(class_index, 0) + 1
-
+			true_case_stat[class_index] = true_case_stat.get(class_index, 0) + 1
 			if class_index not in all_gt_boxes:
 				all_gt_boxes[class_index] = {}
 			if image_id not in all_gt_boxes[class_index]:
 				all_gt_boxes[class_index][image_id] = []
 			all_gt_boxes[class_index][image_id].append(gt_box)
-			if class_index not in all_difficult_cases:
-				all_difficult_cases[class_index]={}
-			if image_id not in all_difficult_cases[class_index]:
-				all_difficult_cases[class_index][image_id] = []
-			all_difficult_cases[class_index][image_id].append(difficult)
 
 	for class_index in all_gt_boxes:
 		for image_id in all_gt_boxes[class_index]:
 			all_gt_boxes[class_index][image_id] = torch.stack(all_gt_boxes[class_index][image_id])
-	for class_index in all_difficult_cases:
-		for image_id in all_difficult_cases[class_index]:
-			all_gt_boxes[class_index][image_id] = torch.tensor(all_gt_boxes[class_index][image_id])
-	return true_case_stat, all_gt_boxes, all_difficult_cases
+	return true_case_stat, all_gt_boxes
 
 
-def compute_average_precision_per_class(num_true_cases, gt_boxes, difficult_cases,
+def compute_average_precision_per_class(num_true_cases, gt_boxes,
 										prediction_file, iou_threshold, use_2007_metric):
 	""" Computes average precision per class
 	"""
@@ -106,12 +96,11 @@ def compute_average_precision_per_class(num_true_cases, gt_boxes, difficult_case
 			max_iou = torch.max(ious).item()
 			max_arg = torch.argmax(ious).item()
 			if max_iou > iou_threshold:
-				if difficult_cases[image_id][max_arg] == 0:
-					if (image_id, max_arg) not in matched:
-						true_positive[i] = 1
-						matched.add((image_id, max_arg))
-					else:
-						false_positive[i] = 1
+				if (image_id, max_arg) not in matched:
+					true_positive[i] = 1
+					matched.add((image_id, max_arg))
+				else:
+					false_positive[i] = 1
 			else:
 				false_positive[i] = 1
 
@@ -132,7 +121,7 @@ if __name__ == '__main__':
 	class_names = [name.strip() for name in open(args.label_file).readlines()]
 	dataset = ImagenetDataset(args.dataset, is_val=True)
 	config = mobilenetv1_ssd_config
-	true_case_stat, all_gb_boxes, all_difficult_cases = group_annotation_by_class(dataset)
+	true_case_stat, all_gb_boxes = group_annotation_by_class(dataset)
 	if args.net == 'basenet':
 		pred_enc = mvod_basenet.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
 		pred_dec = mvod_basenet.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config, batch_size=1)
@@ -218,7 +207,6 @@ if __name__ == '__main__':
 		ap = compute_average_precision_per_class(
 			true_case_stat[class_index],
 			all_gb_boxes[class_index],
-			all_difficult_cases[class_index],
 			prediction_path,
 			args.iou_threshold,
 			use_2007_metric=False
