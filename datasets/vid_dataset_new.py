@@ -27,7 +27,7 @@ class VIDDataset:
 		self.root = pathlib.Path(root)
 		self.transform = transform
 		self.target_transform = target_transform
-		self.is_test = is_test
+		#self.is_test = is_test
 		self.is_val = is_val
 		if is_val:
 			image_sets_file = "datasets/val_VID_seqs_list.txt"
@@ -106,16 +106,16 @@ class VIDDataset:
 		:param index: index of a specific image
 		:return: record['boxes', 'labels']
 		"""
-		image_seq = self.ids[i]
+		image_seq = self.seq_list[i]
 		image_ids = image_seq.split(',')
 		images = []
 		boxes_seq = []
 		labels_seq = []
 		for image_id in image_ids:
 			if self.is_val:
-				annotation_file = self.data / f"Annotations/VID/val/{index}.xml"
+				annotation_file = self.data / f"Annotations/VID/val/{image_id}.xml"
 			else:
-				annotation_file = self.data / f"Annotations/VID/train/{index}.xml"
+				annotation_file = self.data / f"Annotations/VID/train/{image_id}.xml"
 			objects = ET.parse(annotation_file).findall("object")
 			boxes = []
 			labels = []
