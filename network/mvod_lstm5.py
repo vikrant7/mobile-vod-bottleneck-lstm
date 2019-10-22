@@ -283,7 +283,7 @@ class MobileNetV1(nn.Module):
 
 
 class SSD(nn.Module):
-	def __init__(self,num_classes, batch_size, alpha = 1, is_test=False, config = None):
+	def __init__(self,num_classes, batch_size, alpha = 1, is_test=False, config = None, device = None):
 		"""
 		Arguments:
 			num_classes : an int variable having value of total number of classes
@@ -297,6 +297,10 @@ class SSD(nn.Module):
 		self.is_test = is_test
 		self.config = config
 		self.num_classes = num_classes
+		if device:
+			self.device = device
+		else:
+			self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 		if is_test:
 			self.config = config
 			self.priors = config.priors.to(self.device)

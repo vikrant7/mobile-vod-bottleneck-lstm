@@ -11,7 +11,7 @@ from utils.misc import Timer
 class Predictor:
 	def __init__(self, net, size, mean=0.0, std=1.0, nms_method=None,
 				 iou_threshold=0.45, filter_threshold=0.01, candidate_size=200, sigma=0.5, device=None):
-	"""Implement Predictor while testing of the model
+		"""Implement Predictor while testing of the model
 		Arguments:
 			net: an object of net to used for prediction
 			size: variable containing size of image as input
@@ -24,7 +24,7 @@ class Predictor:
 			sigma: the parameter in score re-computation. (for soft negative mining)
 				scores[i] = scores[i] * exp(-(iou_i)^2 / simga)
 			device : variable containing device on which net needs to do computation
-	"""
+		"""
 		self.net = net
 		self.transform = PredictionTransform(size, mean, std)
 		self.iou_threshold = iou_threshold

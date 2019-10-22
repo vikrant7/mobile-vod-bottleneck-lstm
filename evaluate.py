@@ -9,7 +9,13 @@ dataset : ImagenetDataset (torch.utils.data.Dataset, For more info see datasets/
 
 """
 import torch
-from network import mvod_basenet, mvod_bottlneck_lstm1, mvod_bottlneck_lstm2, mvod_bottlneck_lstm3, mvod_lstm4, mvod_lstm5
+#from network import *
+import network.mvod_basenet
+import network.mvod_bottleneck_lstm1
+import network.mvod_bottleneck_lstm2
+import network.mvod_bottleneck_lstm3
+import network.mvod_lstm4 
+import network.mvod_lstm5 
 from network.predictor import Predictor 
 from datasets.vid_dataset import ImagenetDataset
 from config import mobilenetv1_ssd_config
@@ -35,7 +41,7 @@ parser.add_argument("--eval_dir", default="eval_results", type=str, help="The di
 parser.add_argument('--width_mult', default=1.0, type=float,
 					help='Width Multiplifier for network')
 args = parser.parse_args()
-DEVICE = torch.device("cuda:0" if torch.cuda.is_available() and args.use_cuda else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() and args.use_cuda else "cpu")
 
 
 def group_annotation_by_class(dataset):
@@ -121,31 +127,32 @@ if __name__ == '__main__':
 	class_names = [name.strip() for name in open(args.label_file).readlines()]
 	dataset = ImagenetDataset(args.dataset, is_val=True)
 	config = mobilenetv1_ssd_config
+	num_classes = len(dataset._classes_names)
 	true_case_stat, all_gb_boxes = group_annotation_by_class(dataset)
 	if args.net == 'basenet':
-		pred_enc = mvod_basenet.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
-		pred_dec = mvod_basenet.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config, batch_size=1)
-		net = mvod_basenet.MobileVOD(pred_enc, pred_dec)
+		pred_enc = network.mvod_basenet.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
+		pred_dec = network.mvod_basenet.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config)
+		net = network.mvod_basenet.MobileVOD(pred_enc, pred_dec)
 	elif args.net == 'lstm1':
-		pred_enc = mvod_bottlneck_lstm1.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
-		pred_dec = mvod_bottlneck_lstm1.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config, batch_size=1)
-		net = mvod_bottlneck_lstm1.MobileVOD(pred_enc, pred_dec)
+		pred_enc = network.mvod_bottleneck_lstm1.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
+		pred_dec = network.mvod_bottleneck_lstm1.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config, batch_size=1)
+		net = network.mvod_bottleneck_lstm1.MobileVOD(pred_enc, pred_dec)
 	elif args.net == 'lstm2':
-		pred_enc = mvod_bottlneck_lstm2.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
-		pred_dec = mvod_bottlneck_lstm2.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config, batch_size=1)
-		net = mvod_bottlneck_lstm2.MobileVOD(pred_enc, pred_dec)
+		pred_enc = network.mvod_bottleneck_lstm2.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
+		pred_dec = network.mvod_bottleneck_lstm2.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config, batch_size=1)
+		net = network.mvod_bottleneck_lstm2.MobileVOD(pred_enc, pred_dec)
 	elif args.net == 'lstm3':
-		pred_enc = mvod_bottlneck_lstm3.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
-		pred_dec = mvod_bottlneck_lstm3.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config, batch_size=1)
-		net = mvod_bottlneck_lstm3.MobileVOD(pred_enc, pred_dec)
+		pred_enc = network.mvod_bottleneck_lstm3.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
+		pred_dec = network.mvod_bottleneck_lstm3.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config, batch_size=1)
+		net = network.mvod_bottleneck_lstm3.MobileVOD(pred_enc, pred_dec)
 	elif args.net == 'lstm4':
-		pred_enc = mvod_lstm4.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
-		pred_dec = mvod_lstm4.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config, batch_size=1)
-		net = mvod_lstm4.MobileVOD(pred_enc, pred_dec)
+		pred_enc = network.mvod_lstm4.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
+		pred_dec = network.mvod_lstm4.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config, batch_size=1)
+		net = network.mvod_lstm4.MobileVOD(pred_enc, pred_dec)
 	elif args.net == 'lstm5':
-		pred_enc = mvod_lstm5.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
-		pred_dec = mvod_lstm5.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config, batch_size=1)
-		net = mvod_lstm5.MobileVOD(pred_enc, pred_dec)
+		pred_enc = network.mvod_lstm5.MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
+		pred_dec = network.mvod_lstm5.SSD(num_classes=num_classes, alpha = args.width_mult, is_test=True, config= config, batch_size=1)
+		net = network.mvod_lstm5.MobileVOD(pred_enc, pred_dec)
 	else:
 		logging.fatal("The net type is wrong. It should be one of basenet, lstm{1,2,3,4,5}.")
 		parser.print_help(sys.stderr)
@@ -155,7 +162,7 @@ if __name__ == '__main__':
 	net.load_state_dict(
 			torch.load(args.trained_model,
 					   map_location=lambda storage, loc: storage))
-	net = net.to(DEVICE)
+	net = net.to(device)
 	print(f'It took {timer.end("Load Model")} seconds to load the model.')
 	predictor = Predictor(net, config.image_size, config.image_mean,
                           config.image_std,
@@ -173,9 +180,7 @@ if __name__ == '__main__':
 		print("Load Image: {:4f} seconds.".format(timer.end("Load Image")))
 		timer.start("Predict")
 		boxes, labels, probs = predictor.predict(image)
-		if args.net == 'basenet':
-			continue
-		else:
+		if args.net != 'basenet':
 			net.detach_hidden()
 		print("Prediction: {:4f} seconds.".format(timer.end("Predict")))
 		indexes = torch.ones(labels.size(0), 1, dtype=torch.float32) * i
@@ -185,6 +190,7 @@ if __name__ == '__main__':
 			probs.reshape(-1, 1),
 			boxes + 1.0  # matlab's indexes start from 1
 		], dim=1))
+	#print(results)
 	results = torch.cat(results)
 	for class_index, class_name in enumerate(class_names):
 		if class_index == 0: continue  # ignore background
