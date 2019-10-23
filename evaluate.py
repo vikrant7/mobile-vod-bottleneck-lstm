@@ -174,6 +174,10 @@ if __name__ == '__main__':
 
 	results = []
 	for i in range(len(dataset)):
+		if i%10 == 0:
+			net.load_state_dict(
+			torch.load(args.trained_model,
+					   map_location=lambda storage, loc: storage))
 		print("process image", i)
 		timer.start("Load Image")
 		image = dataset.get_image(i)

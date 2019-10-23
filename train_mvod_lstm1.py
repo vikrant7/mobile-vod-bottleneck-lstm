@@ -270,7 +270,7 @@ if __name__ == '__main__':
 
 	net.to(DEVICE)
 
-	criterion = MultiboxLoss(config.priors, iou_threshold=0.5, neg_pos_ratio=3,
+	criterion = MultiboxLoss(config.priors, iou_threshold=0.5, neg_pos_ratio=10,
 							 center_variance=0.1, size_variance=0.2, device=DEVICE)
 	optimizer = torch.optim.RMSprop([{'params': [param for name, param in net.pred_encoder.named_parameters()], 'lr': base_net_lr},
 		{'params': [param for name, param in net.pred_decoder.named_parameters()], 'lr': ssd_lr},], lr=args.lr,
