@@ -136,8 +136,7 @@ class BottleneckLSTMCell(nn.Module):
 		"""
 		for m in self.modules():
 			if isinstance(m, nn.Conv2d):
-				n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-				m.weight.data.normal_(0, math.sqrt(2. / n))
+				nn.init.xavier_uniform_(m.weight)
 				if m.bias is not None:
 					m.bias.data.zero_()
 			elif isinstance(m, nn.BatchNorm2d):
@@ -262,8 +261,7 @@ class MobileNetV1(nn.Module):
 		"""
 		for m in self.modules():
 			if isinstance(m, nn.Conv2d):
-				n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-				m.weight.data.normal_(0, math.sqrt(2. / n))
+				nn.init.xavier_uniform_(m.weight)
 				if m.bias is not None:
 					m.bias.data.zero_()
 			elif isinstance(m, nn.BatchNorm2d):
@@ -355,8 +353,7 @@ class SSD(nn.Module):
 		"""
 		for m in self.modules():
 			if isinstance(m, nn.Conv2d):
-				n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-				m.weight.data.normal_(0, math.sqrt(2. / n))
+				nn.init.xavier_uniform_(m.weight)
 				if m.bias is not None:
 					m.bias.data.zero_()
 			elif isinstance(m, nn.BatchNorm2d):
