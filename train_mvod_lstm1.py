@@ -186,29 +186,21 @@ def val(loader, net, criterion, device):
 		net.detach_hidden()
 	return running_loss / num, running_regression_loss / num, running_classification_loss / num
 
-def initialize_model(pred_enc, pred_dec):
+def initialize_model(net):
 	""" Loads learned weights from pretrained checkpoint model
 	Arguments:
-		pred_enc : object of MobileNetV1
-		pred_dec : object of SSD
+		net : object of MobileVOD
 	"""
 	if args.pretrained:
 		logging.info("Loading weights from pretrained netwok")
 		pretrained_net_dict = torch.load(args.pretrained)
-
-		model_dict = pred_enc.state_dict()
+		model_dict = net.state_dict()
 		# 1. filter out unnecessary keys
 		pretrained_dict = {k: v for k, v in pretrained_net_dict.items() if k in model_dict}
 		# 2. overwrite entries in the existing state dict
 		model_dict.update(pretrained_dict)
-		pred_enc.load_state_dict(model_dict)
+		net.load_state_dict(model_dict)
 
-		model_dict = pred_dec.state_dict()
-		# 1. filter out unnecessary keys
-		pretrained_dict = {k: v for k, v in pretrained_net_dict.items() if k in model_dict}
-		# 2. overwrite entries in the existing state dict
-		model_dict.update(pretrained_dict)
-		pred_dec.load_state_dict(model_dict)
 
 
 
@@ -248,8 +240,8 @@ if __name__ == '__main__':
 	pred_enc = MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
 	pred_dec = SSD(num_classes=num_classes, batch_size = args.batch_size, alpha = args.width_mult, is_test=False)
 	if args.resume is None:
-		initialize_model(pred_enc, pred_dec)
 		net = MobileVOD(pred_enc, pred_dec)
+		initialize_model(net)
 	else:
 		net = MobileVOD(pred_enc, pred_dec)
 		print("Updating weights from resume model")

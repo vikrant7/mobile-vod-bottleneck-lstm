@@ -4,10 +4,10 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from typing import List, Tuple
-from utils import box_utils
-from collections import namedtuple
-from collections import OrderedDict
+# from typing import List, Tuple
+# from utils import box_utils
+# from collections import namedtuple
+# from collections import OrderedDict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -153,8 +153,7 @@ class MobileNetV1(nn.Module):
 		"""
 		for m in self.modules():
 			if isinstance(m, nn.Conv2d):
-				n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-				m.weight.data.normal_(0, math.sqrt(2. / n))
+				nn.init.xavier_uniform_(m.weight)
 				if m.bias is not None:
 					m.bias.data.zero_()
 			elif isinstance(m, nn.BatchNorm2d):
@@ -243,8 +242,7 @@ class SSD(nn.Module):
 		"""
 		for m in self.modules():
 			if isinstance(m, nn.Conv2d):
-				n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-				m.weight.data.normal_(0, math.sqrt(2. / n))
+				nn.init.xavier_uniform_(m.weight)
 				if m.bias is not None:
 					m.bias.data.zero_()
 			elif isinstance(m, nn.BatchNorm2d):
