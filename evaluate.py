@@ -178,6 +178,7 @@ if __name__ == '__main__':
 			net.load_state_dict(
 			torch.load(args.trained_model,
 					   map_location=lambda storage, loc: storage))
+			net = net.to(device)
 		print("process image", i)
 		timer.start("Load Image")
 		image = dataset.get_image(i)

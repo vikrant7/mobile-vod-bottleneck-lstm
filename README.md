@@ -159,6 +159,10 @@ References
 2. PyTorch SSD [[https://github.com/qfgaohao/pytorch-ssd](https://github.com/qfgaohao/pytorch-ssd)]
 3. LSTM Object Detection [[https://github.com/tensorflow/models/tree/master/research/lstm_object_detection](https://github.com/tensorflow/models/tree/master/research/lstm_object_detection)]
 
+Contributors
+------------
+
+Thanks a lot to \[[Pichao Wang](https://scholar.google.com/citations?user=QozdnnoAAAAJ&hl=en​)\] for training the model and suggesting several changes.
 
 License
 -------
