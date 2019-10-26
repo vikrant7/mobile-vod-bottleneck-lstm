@@ -1,2 +1,4 @@
 cache/
 eval_results/
+__pycache__/
+*.py[cod]
