@@ -292,13 +292,13 @@ if __name__ == '__main__':
 			  device=DEVICE, debug_steps=args.debug_steps, epoch=epoch, sequence_length=args.sequence_length)
 		
 		if epoch % args.validation_epochs == 0 or epoch == args.num_epochs - 1:
-			val_loss, val_regression_loss, val_classification_loss = val(val_loader, net, criterion, DEVICE)
-			logging.info(
-				f"Epoch: {epoch}, " +
-				f"Validation Loss: {val_loss:.4f}, " +
-				f"Validation Regression Loss {val_regression_loss:.4f}, " +
-				f"Validation Classification Loss: {val_classification_loss:.4f}"
-			)
-			model_path = os.path.join(output_path, f"WM-{args.width_mult}-Epoch-{epoch}-Loss-{val_loss}.pth")
+			#val_loss, val_regression_loss, val_classification_loss = val(val_loader, net, criterion, DEVICE)
+			# logging.info(
+			# 	f"Epoch: {epoch}, " +
+			# 	f"Validation Loss: {val_loss:.4f}, " +
+			# 	f"Validation Regression Loss {val_regression_loss:.4f}, " +
+			# 	f"Validation Classification Loss: {val_classification_loss:.4f}"
+			# )
+			model_path = os.path.join(output_path, f"WM-{args.width_mult}-Epoch-{epoch}.pth")
 			torch.save(net.state_dict(), model_path)
 			logging.info(f"Saved model {model_path}")
