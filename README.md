@@ -33,7 +33,7 @@ Dependencies
 Dataset 
 -------
 
-Download Imagenet VID 2015 dataset from \[[link](http://bvisionweb1.cs.unc.edu/ilsvrc2015/download-videos-3j16.php​)\]
+Download Imagenet VID 2015 dataset from \[[link](http://bvisionweb1.cs.unc.edu/ILSVRC2017/download-videos-1p39.php)\]. This is the link for ILSVRC2017 as the link for ILSVRC2015 seems to down now.
 
 To get list of training, validation and test dataset (make sure to change path of dataset in the scripts):
  * for basenet training run **`datasets/get_VID_list.py`** script.
