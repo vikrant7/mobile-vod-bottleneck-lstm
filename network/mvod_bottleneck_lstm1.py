@@ -173,14 +173,14 @@ class BottleneckLSTMCell(nn.Module):
 			cell state and hidden state
 		"""
 		if self.Wci is None:
-			self.Wci = Variable(torch.zeros(1, hidden, shape[0], shape[1]))#.cuda()
-			self.Wcf = Variable(torch.zeros(1, hidden, shape[0], shape[1]))#.cuda()
-			self.Wco = Variable(torch.zeros(1, hidden, shape[0], shape[1]))#.cuda()
+			self.Wci = Variable(torch.zeros(1, hidden, shape[0], shape[1])).cuda()
+			self.Wcf = Variable(torch.zeros(1, hidden, shape[0], shape[1])).cuda()
+			self.Wco = Variable(torch.zeros(1, hidden, shape[0], shape[1])).cuda()
 		else:
 			assert shape[0] == self.Wci.size()[2], 'Input Height Mismatched!'
 			assert shape[1] == self.Wci.size()[3], 'Input Width Mismatched!'
-		return (Variable(torch.zeros(batch_size, hidden, shape[0], shape[1])),#.cuda(),
-				Variable(torch.zeros(batch_size, hidden, shape[0], shape[1]))#.cuda()
+		return (Variable(torch.zeros(batch_size, hidden, shape[0], shape[1])).cuda(),
+				Variable(torch.zeros(batch_size, hidden, shape[0], shape[1])).cuda()
 				)
 
 class BottleneckLSTM(nn.Module):
