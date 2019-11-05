@@ -17,7 +17,7 @@ import os
 
 class VIDDataset:
 
-	def __init__(self, data, root, transform=None, target_transform=None, is_val=False, label_file=None):
+	def __init__(self, data, root, transform=None, target_transform=None, is_val=False, batch_size=None, label_file=None):
 		"""Dataset for VID data.
 		Args:
 			root: the root of the ILSVRC2015 dataset, the directory contains the following sub-directories:
@@ -34,7 +34,8 @@ class VIDDataset:
 		else:
 			image_sets_file = "datasets/train_VID_seqs_list.txt"
 		self.seq_list = VIDDataset._read_image_seq_ids(image_sets_file)
-
+		rem = len(self.seq_list)%batch_size
+		self.seq_list = self.seq_list[:-(rem)]
 		logging.info("using default Imagenet VID classes.")
 		self._classes_names = ['__background__',  # always index 0
 					'airplane', 'antelope', 'bear', 'bicycle',

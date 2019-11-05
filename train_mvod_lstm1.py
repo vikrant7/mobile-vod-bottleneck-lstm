@@ -196,7 +196,7 @@ def initialize_model(net):
 		pretrained_net_dict = torch.load(args.pretrained)
 		model_dict = net.state_dict()
 		# 1. filter out unnecessary keys
-		pretrained_dict = {k: v for k, v in pretrained_net_dict.items() if k in model_dict}
+		pretrained_dict = {k: v for k, v in pretrained_net_dict.items() if k in model_dict and model_dict[k].shape == pretrained_net_dict[k].shape}
 		# 2. overwrite entries in the existing state dict
 		model_dict.update(pretrained_dict)
 		net.load_state_dict(model_dict)
@@ -217,7 +217,7 @@ if __name__ == '__main__':
 
 	logging.info("Prepare training datasets.")
 	train_dataset = VIDDataset(args.datasets, args.cache_path, transform=train_transform,
-								 target_transform=target_transform)
+								 target_transform=target_transform, batch_size=args.batch_size)
 	label_file = os.path.join("models/", "vid-model-labels.txt")
 	store_labels(label_file, train_dataset._classes_names)
 	num_classes = len(train_dataset._classes_names)
@@ -226,15 +226,15 @@ if __name__ == '__main__':
 	train_loader = DataLoader(train_dataset, args.batch_size,
 							  num_workers=args.num_workers,
 							  shuffle=True)
-	logging.info("Prepare Validation datasets.")
-	val_dataset = VIDDataset(args.datasets, args.cache_path, transform=test_transform,
-								 target_transform=target_transform, is_val=True)
-	logging.info(val_dataset)
-	logging.info("validation dataset size: {}".format(len(val_dataset)))
+	# logging.info("Prepare Validation datasets.")
+	# val_dataset = VIDDataset(args.datasets, args.cache_path, transform=test_transform,
+	# 							 target_transform=target_transform, is_val=True)
+	# logging.info(val_dataset)
+	# logging.info("validation dataset size: {}".format(len(val_dataset)))
 
-	val_loader = DataLoader(val_dataset, args.batch_size,
-							num_workers=args.num_workers,
-							shuffle=False)
+	# val_loader = DataLoader(val_dataset, args.batch_size,
+	# 						num_workers=args.num_workers,
+	# 						shuffle=False)
 	#num_classes = 30
 	logging.info("Build network.")
 	pred_enc = MobileNetV1(num_classes=num_classes, alpha = args.width_mult)
