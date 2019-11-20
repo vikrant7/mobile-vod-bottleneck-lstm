@@ -123,9 +123,9 @@ class BottleneckLSTMCell(nn.Module):
 		self.Wbc = nn.Conv2d(self.hidden_channels, self.hidden_channels, 1, 1, 0, bias=False)
 		self.Wbo = nn.Conv2d(self.hidden_channels, self.hidden_channels, 1, 1, 0, bias=False)
 		self.relu = nn.ReLU6()
-		self.Wci = None
-		self.Wcf = None
-		self.Wco = None
+		# self.Wci = None
+		# self.Wcf = None
+		# self.Wco = None
 		logging.info("Initializing weights of lstm")
 		self._initialize_weights()
 
@@ -156,10 +156,10 @@ class BottleneckLSTMCell(nn.Module):
 		y = torch.cat((x, h),1) #concatenate input and hidden layers
 		i = self.Wy(y) #reduce to hidden layer size
 		b = self.Wi(i)	#depth wise 3*3
-		ci = torch.sigmoid(self.Wbi(b) + c * self.Wci)
-		cf = torch.sigmoid(self.Wbf(b) + c * self.Wcf)
+		ci = torch.sigmoid(self.Wbi(b))
+		cf = torch.sigmoid(self.Wbf(b))
 		cc = cf * c + ci * self.relu(self.Wbc(b))
-		co = torch.sigmoid(self.Wbo(b) + cc * self.Wco)
+		co = torch.sigmoid(self.Wbo(b))
 		ch = co * self.relu(cc)
 		return ch, cc
 
@@ -172,13 +172,13 @@ class BottleneckLSTMCell(nn.Module):
 		Returns:
 			cell state and hidden state
 		"""
-		if self.Wci is None:
-			self.Wci = Variable(torch.zeros(1, hidden, shape[0], shape[1])).cuda()
-			self.Wcf = Variable(torch.zeros(1, hidden, shape[0], shape[1])).cuda()
-			self.Wco = Variable(torch.zeros(1, hidden, shape[0], shape[1])).cuda()
-		else:
-			assert shape[0] == self.Wci.size()[2], 'Input Height Mismatched!'
-			assert shape[1] == self.Wci.size()[3], 'Input Width Mismatched!'
+		# if self.Wci is None:
+		# 	self.Wci = Variable(torch.zeros(1, hidden, shape[0], shape[1])).cuda()
+		# 	self.Wcf = Variable(torch.zeros(1, hidden, shape[0], shape[1])).cuda()
+		# 	self.Wco = Variable(torch.zeros(1, hidden, shape[0], shape[1])).cuda()
+		# else:
+		# 	assert shape[0] == self.Wci.size()[2], 'Input Height Mismatched!'
+		# 	assert shape[1] == self.Wci.size()[3], 'Input Width Mismatched!'
 		return (Variable(torch.zeros(batch_size, hidden, shape[0], shape[1])).cuda(),
 				Variable(torch.zeros(batch_size, hidden, shape[0], shape[1])).cuda()
 				)

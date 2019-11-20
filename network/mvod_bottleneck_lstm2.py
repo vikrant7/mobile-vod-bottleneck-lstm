@@ -158,7 +158,7 @@ class BottleneckLSTMCell(nn.Module):
 		ci = torch.sigmoid(self.Wbi(b) + c * self.Wci)
 		cf = torch.sigmoid(self.Wbf(b) + c * self.Wcf)
 		cc = cf * c + ci * self.relu(self.Wbc(b))
-		co = torch.sigmoid(self.Wbo(b) + cc * self.Wco)
+		co = torch.sigmoid(self.Wbo(b) + c * self.Wco)
 		ch = co * self.relu(cc)
 		return ch, cc
 
